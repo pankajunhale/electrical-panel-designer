@@ -117,9 +117,9 @@ export function IncomerDetailsForm({
         <h2 className="text-lg font-semibold mb-2">Incomer Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {incomers.map((incomer, idx) => (
-            <Card key={idx} className="bg-muted/80">
+            <Card key={idx}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center bg-muted font-semibold rounded-t">
+                <CardTitle className="text-base text-center font-semibold rounded-t">
                   {incomer.name}
                 </CardTitle>
               </CardHeader>
@@ -160,9 +160,9 @@ export function IncomerDetailsForm({
         <h2 className="text-lg font-semibold mb-2">Feeder Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {feeders.map((item, idx) => (
-            <Card key={idx} className="bg-muted/80">
+            <Card key={idx}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center bg-muted font-semibold rounded-t">
+                <CardTitle className="text-base text-center font-semibold rounded-t">
                   {item.name}
                 </CardTitle>
               </CardHeader>

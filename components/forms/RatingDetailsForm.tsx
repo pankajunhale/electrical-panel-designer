@@ -128,9 +128,9 @@ export function RatingDetailsForm({
         <h2 className="text-lg font-semibold mb-2">Incomer Ratings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {incomers.map((item, idx) => (
-            <Card key={idx} className="bg-muted/80">
+            <Card key={idx}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center bg-muted font-semibold rounded-t">
+                <CardTitle className="text-base text-center font-semibold rounded-t">
                   {`Incomer No. ${idx + 1}`}
                 </CardTitle>
               </CardHeader>
@@ -226,9 +226,9 @@ export function RatingDetailsForm({
         <h2 className="text-lg font-semibold mb-2">Feeder Ratings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {feeders.map((item, idx) => (
-            <Card key={idx} className="bg-muted/80">
+            <Card key={idx}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center bg-muted font-semibold rounded-t">
+                <CardTitle className="text-base text-center font-semibold rounded-t">
                   {`Feeder No. ${idx + 1}`}
                 </CardTitle>
               </CardHeader>

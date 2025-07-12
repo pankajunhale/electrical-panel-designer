@@ -125,8 +125,12 @@ export function IncomerTypesForm({
     onNext({ incomers, feeders: data.feeders });
   };
 
-  const gridClass =
-    numberOfIncomers <= 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1";
+  // Responsive grid: max 4 columns, use actual count for fewer items
+  const gridCols = Math.min(numberOfIncomers, 4);
+  const gridClass = `grid grid-cols-1 sm:grid-cols-${Math.min(
+    2,
+    gridCols
+  )} md:grid-cols-${Math.min(3, gridCols)} lg:grid-cols-${gridCols} gap-4`;
 
   return (
     <>
@@ -137,7 +141,7 @@ export function IncomerTypesForm({
           </h2>
           <div className={gridClass}>
             {incomers.map((item, idx) => (
-              <Card key={idx} className="bg-muted/80">
+              <Card key={idx}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Incomer {idx + 1}</CardTitle>
                 </CardHeader>
@@ -292,17 +296,6 @@ export function IncomerTypesForm({
               </Card>
             ))}
           </div>
-        </div>
-        <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onBack}>
-            Back
-          </Button>
-          <Button
-            type="button"
-            onClick={() => onNext({ incomers, feeders: feederSectionData })}
-          >
-            Next
-          </Button>
         </div>
       </form>
       {/* Feeder Incomer Types Section */}

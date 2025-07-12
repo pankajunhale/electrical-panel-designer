@@ -103,8 +103,8 @@ export function FeederIncomerTypesForm({
     onNext(data);
   };
 
-  // Responsive grid columns: max 4, else use count
-  const gridCols = numberOfFeeders < 4 ? numberOfFeeders : 4;
+  // Responsive grid: max 4 columns, use actual count for fewer items
+  const gridCols = Math.min(numberOfFeeders, 4);
   const gridClass = `grid grid-cols-1 sm:grid-cols-${Math.min(
     2,
     gridCols
@@ -123,9 +123,9 @@ export function FeederIncomerTypesForm({
         </h2>
         <div className={gridClass}>
           {feeders.map((item, idx) => (
-            <Card key={idx} className="bg-muted/80">
+            <Card key={idx}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center bg-muted font-semibold rounded-t">
+                <CardTitle className="text-base text-center font-semibold rounded-t">
                   {`Feeder No. ${idx + 1}`}
                 </CardTitle>
               </CardHeader>
