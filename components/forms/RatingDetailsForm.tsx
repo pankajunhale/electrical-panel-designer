@@ -56,6 +56,17 @@ export function RatingDetailsForm({
   numberOfIncomers,
   numberOfFeeders,
 }: RatingDetailsFormProps) {
+  // If we have initial data, make the form read-only
+  const isReadOnly = !!initialData;
+
+  // Auto-submit when form is read-only (has initial data)
+  useEffect(() => {
+    if (isReadOnly && initialData) {
+      // Auto-proceed with the initial data
+      onNext(initialData);
+    }
+  }, [isReadOnly, initialData, onNext]);
+
   const [incomers, setIncomers] = useState(
     Array.from({ length: numberOfIncomers }, (_, i) => ({
       currentRating: initialData?.incomers?.[i]?.currentRating || "100A",

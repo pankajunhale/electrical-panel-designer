@@ -10,6 +10,7 @@ import {
   panelDetailsSchema,
   PanelDetailsFormData,
 } from "@/schema/panel-details";
+import { useEffect } from "react";
 
 interface PanelDetailsFormProps {
   onNext: (data: PanelDetailsFormData) => void;
@@ -24,6 +25,17 @@ export function PanelDetailsForm({
   initialData,
   isLoading = false,
 }: PanelDetailsFormProps) {
+  // If we have initial data, make the form read-only
+  const isReadOnly = !!initialData;
+
+  // Auto-submit when form is read-only (has initial data)
+  useEffect(() => {
+    if (isReadOnly && initialData) {
+      // Auto-proceed with the initial data
+      onNext(initialData);
+    }
+  }, [isReadOnly, initialData, onNext]);
+
   const {
     register,
     handleSubmit,

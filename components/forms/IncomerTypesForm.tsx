@@ -48,6 +48,17 @@ export function IncomerTypesForm({
   numberOfIncomers,
   numberOfFeeders,
 }: IncomerTypesFormProps) {
+  // If we have initial data, make the form read-only
+  const isReadOnly = !!initialData;
+
+  // Auto-submit when form is read-only (has initial data)
+  useEffect(() => {
+    if (isReadOnly && initialData) {
+      // Auto-proceed with the initial data
+      onNext(initialData);
+    }
+  }, [isReadOnly, initialData, onNext]);
+
   const [incomers, setIncomers] = useState(
     Array.from({ length: numberOfIncomers }, (_, i) => ({
       incomerType: initialData?.incomers?.[i]?.incomerType || "MCCB",

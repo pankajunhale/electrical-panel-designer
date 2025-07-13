@@ -44,6 +44,21 @@ export function IncomerDetailsForm({
   numberOfIncomers,
   numberOfFeeders,
 }: IncomerDetailsFormProps) {
+  // If we have initial data, make the form read-only
+  const isReadOnly = !!initialData;
+
+  // Auto-submit when form is read-only (has initial data)
+  useEffect(() => {
+    if (isReadOnly && initialData) {
+      console.log(
+        "🔄 IncomerDetailsForm: Auto-submitting with initial data:",
+        initialData
+      );
+      // Auto-proceed with the initial data
+      onNext(initialData);
+    }
+  }, [isReadOnly, initialData, onNext]);
+
   // Initialize arrays with proper default values
   const initialIncomers = useMemo(() => {
     return Array.from({ length: numberOfIncomers }, (_, i) => ({
@@ -143,6 +158,8 @@ export function IncomerDetailsForm({
                     id={`incomers.${idx}.ampereRating`}
                     value={incomer.ampereRating}
                     onChange={(e) => onChangeIncomerAmp(idx, e.target.value)}
+                    disabled={isReadOnly}
+                    className={isReadOnly ? "bg-muted" : ""}
                   />
                   {errors.incomers?.[idx]?.ampereRating && (
                     <p className="text-xs text-destructive">
@@ -187,8 +204,11 @@ export function IncomerDetailsForm({
                     onValueChange={(val) =>
                       onChangeFeeder(idx, "starterType", val)
                     }
+                    disabled={isReadOnly}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+                    >
                       <SelectValue placeholder="Select starter type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -215,6 +235,8 @@ export function IncomerDetailsForm({
                     onChange={(e) =>
                       onChangeFeeder(idx, "feederAmps", e.target.value)
                     }
+                    disabled={isReadOnly}
+                    className={isReadOnly ? "bg-muted" : ""}
                   />
                   {errors.feeders?.[idx]?.feederAmps && (
                     <p className="text-xs text-destructive">
@@ -231,8 +253,11 @@ export function IncomerDetailsForm({
                     onValueChange={(val) =>
                       onChangeFeeder(idx, "connectToIncomer", val)
                     }
+                    disabled={isReadOnly}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+                    >
                       <SelectValue placeholder="Select incomer" />
                     </SelectTrigger>
                     <SelectContent>

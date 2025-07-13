@@ -63,6 +63,21 @@ export function BasicInfoForm({
     }
   }, [state, onNext]);
 
+  // If we have initial data, make the form read-only
+  const isReadOnly = !!initialData;
+
+  // Auto-submit when form is read-only (has initial data)
+  useEffect(() => {
+    if (isReadOnly && initialData) {
+      console.log(
+        "🔄 BasicInfoForm: Auto-submitting with initial data:",
+        initialData
+      );
+      // Auto-proceed with the initial data
+      onNext(initialData);
+    }
+  }, [isReadOnly, initialData, onNext]);
+
   return (
     <form action={formAction} className="space-y-4">
       {/* System Details */}
@@ -82,6 +97,8 @@ export function BasicInfoForm({
               id="supplyLineVoltage"
               name="supplyLineVoltage"
               defaultValue={initialData?.supplyLineVoltage || "415"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.supplyLineVoltage && (
               <p className="text-xs text-destructive">
@@ -96,8 +113,11 @@ export function BasicInfoForm({
             <Select
               name="supplySystem"
               defaultValue={initialData?.supplySystem || SUPPLY_SYSTEMS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select system" />
               </SelectTrigger>
               <SelectContent>
@@ -122,6 +142,8 @@ export function BasicInfoForm({
               id="controlVoltage"
               name="controlVoltage"
               defaultValue={initialData?.controlVoltage || "240"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.controlVoltage && (
               <p className="text-xs text-destructive">
@@ -136,8 +158,11 @@ export function BasicInfoForm({
             <Select
               name="panelType"
               defaultValue={initialData?.panelType || PANEL_TYPES[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select panel type" />
               </SelectTrigger>
               <SelectContent>
@@ -164,6 +189,8 @@ export function BasicInfoForm({
               type="number"
               min={1}
               defaultValue={initialData?.numberOfIncomers || "2"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.numberOfIncomers && (
               <p className="text-xs text-destructive">
@@ -181,6 +208,8 @@ export function BasicInfoForm({
               type="number"
               min={1}
               defaultValue={initialData?.numberOfOutgoingFeeders || "8"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.numberOfOutgoingFeeders && (
               <p className="text-xs text-destructive">
@@ -208,6 +237,8 @@ export function BasicInfoForm({
               id="title"
               name="title"
               defaultValue={initialData?.title || "Panel No. 1"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.title && (
               <p className="text-xs text-destructive">
@@ -223,6 +254,8 @@ export function BasicInfoForm({
               id="drawingNo"
               name="drawingNo"
               defaultValue={initialData?.drawingNo || "DWG/2013/01/REV 1"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.drawingNo && (
               <p className="text-xs text-destructive">
@@ -238,6 +271,8 @@ export function BasicInfoForm({
               id="author"
               name="author"
               defaultValue={initialData?.author || "Author Name"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.author && (
               <p className="text-xs text-destructive">
@@ -253,6 +288,8 @@ export function BasicInfoForm({
               id="company"
               name="company"
               defaultValue={initialData?.company || "Your Company Name"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.company && (
               <p className="text-xs text-destructive">
@@ -268,6 +305,8 @@ export function BasicInfoForm({
               id="customer"
               name="customer"
               defaultValue={initialData?.customer || "Your Customer Name"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.customer && (
               <p className="text-xs text-destructive">
@@ -282,8 +321,11 @@ export function BasicInfoForm({
             <Select
               name="colorFormat"
               defaultValue={initialData?.colorFormat || "Colored"}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select color format" />
               </SelectTrigger>
               <SelectContent>
@@ -305,6 +347,8 @@ export function BasicInfoForm({
               id="ferrulPrefix"
               name="ferrulPrefix"
               defaultValue={initialData?.ferrulPrefix || "1"}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.ferrulPrefix && (
               <p className="text-xs text-destructive">
@@ -329,8 +373,11 @@ export function BasicInfoForm({
             <Select
               name="sfu"
               defaultValue={initialData?.sfu || SFU_OPTIONS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select SFU" />
               </SelectTrigger>
               <SelectContent>
@@ -350,8 +397,11 @@ export function BasicInfoForm({
             <Select
               name="mccb"
               defaultValue={initialData?.mccb || MCCB_OPTIONS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select MCCB" />
               </SelectTrigger>
               <SelectContent>
@@ -371,8 +421,11 @@ export function BasicInfoForm({
             <Select
               name="acb"
               defaultValue={initialData?.acb || ACB_OPTIONS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select ACB" />
               </SelectTrigger>
               <SelectContent>
@@ -392,8 +445,11 @@ export function BasicInfoForm({
             <Select
               name="mpcb"
               defaultValue={initialData?.mpcb || MPCB_OPTIONS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select MPCB" />
               </SelectTrigger>
               <SelectContent>
@@ -413,8 +469,11 @@ export function BasicInfoForm({
             <Select
               name="contactor"
               defaultValue={initialData?.contactor || CONTACTOR_OPTIONS[0]}
+              disabled={isReadOnly}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={`w-full ${isReadOnly ? "bg-muted" : ""}`}
+              >
                 <SelectValue placeholder="Select Contactor" />
               </SelectTrigger>
               <SelectContent>
@@ -437,6 +496,8 @@ export function BasicInfoForm({
               id="meter"
               name="meter"
               defaultValue={initialData?.meter || METER_OPTIONS[0]}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.meter && (
               <p className="text-xs text-destructive">
@@ -450,6 +511,8 @@ export function BasicInfoForm({
               id="pilotDevice"
               name="pilotDevice"
               defaultValue={initialData?.pilotDevice || PILOT_DEVICE_OPTIONS[0]}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.pilotDevice && (
               <p className="text-xs text-destructive">
@@ -463,6 +526,8 @@ export function BasicInfoForm({
               id="capacitor"
               name="capacitor"
               defaultValue={initialData?.capacitor || CAPACITOR_OPTIONS[0]}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted" : ""}
             />
             {state.errors?.capacitor && (
               <p className="text-xs text-destructive">
@@ -479,6 +544,8 @@ export function BasicInfoForm({
           id="saveAsDefault"
           name="saveAsDefault"
           defaultChecked={initialData?.saveAsDefault || false}
+          disabled={isReadOnly}
+          className={isReadOnly ? "bg-muted" : ""}
         />
         <Label htmlFor="saveAsDefault" className="font-medium">
           Save Settings as Default
