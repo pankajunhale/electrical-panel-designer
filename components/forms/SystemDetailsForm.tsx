@@ -10,7 +10,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -26,6 +26,8 @@ import {
   SystemDetailsFormData,
 } from "@/schema/system-details";
 import { useActionState } from "react";
+import { submitBasicInfo } from "@/actions/basic-info";
+import { submitSystemDetails } from "@/actions/system-details";
 
 const SUPPLY_SYSTEMS = [
   "3 Phase 4 Wire, 50Hz",
@@ -45,10 +47,10 @@ export function SystemDetailsForm({
   onSubmit?: (data: SystemDetailsFormData) => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [state, formAction] = useActionState(async (prev, data) => {
-    if (onSubmit) onSubmit(data);
-    return data;
-  }, null);
+  const [state, formAction] = useActionState(submitSystemDetails, {
+    errors: {},
+    message: "",
+  });
   const form = useForm<SystemDetailsFormData>({
     resolver: zodResolver(systemDetailsSchema),
     defaultValues: {
@@ -62,11 +64,18 @@ export function SystemDetailsForm({
     },
     mode: "onChange",
   });
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) =>
-          startTransition(() => formAction(data))
+          startTransition(() => {
+            const formData = new FormData();
+            Object.entries(data).forEach(([key, value]) => {
+              formData.append(key, value.toString());
+            });
+            formAction(formData);
+          })
         )}
         className="space-y-6"
       >

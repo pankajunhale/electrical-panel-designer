@@ -16,12 +16,12 @@ export async function submitSystemDetails(
   formData: FormData
 ): Promise<ActionState> {
   const data = {
-    supplyLineVoltage: formData.get("supplyLineVoltage") as string,
+    supplyLineVoltage: Number(formData.get("supplyLineVoltage")),
     supplySystem: formData.get("supplySystem") as string,
-    controlVoltage: formData.get("controlVoltage") as string,
+    numberOfOutgoingFeeders: Number(formData.get("numberOfOutgoingFeeders")),
+    controlVoltage: Number(formData.get("controlVoltage")),
     panelType: formData.get("panelType") as string,
-    numberOfIncomers: formData.get("numberOfIncomers") as string,
-    numberOfOutgoingFeeders: formData.get("numberOfOutgoingFeeders") as string,
+    numberOfIncomers: Number(formData.get("numberOfIncomers")),
     saveAsDefault: formData.get("saveAsDefault") === "on",
   };
 

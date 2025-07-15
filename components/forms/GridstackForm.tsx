@@ -240,7 +240,7 @@ export function GridstackForm({
     };
 
     loadData();
-  }, [equipmentComponents]); // Added equipmentComponents to dependency array
+  }, []); // Only run once on mount
 
   // Add component to grid
   const addComponentToGrid = (component: GALayoutItem) => {
