@@ -16,16 +16,29 @@ export async function submitPanelDetails(
   formData: FormData
 ): Promise<ActionState> {
   const data = {
-    panelType: formData.get("panelType") as string,
-    construction: formData.get("construction") as string,
-    protection: formData.get("protection") as string,
-    mounting: formData.get("mounting") as string,
-    ipRating: formData.get("ipRating") as string,
-    color: formData.get("color") as string,
+    panelMake: formData.get("panelMake") as string,
+    incomerMake: formData.get("incomerMake") as string,
+    feederMake: formData.get("feederMake") as string,
+    controlMake: formData.get("controlMake") as string,
+    maxHeightFeedersSection: Number(formData.get("maxHeightFeedersSection")),
+    panelDoorsThickness: Number(formData.get("panelDoorsThickness")),
+    mountingPlatesThickness1: Number(formData.get("mountingPlatesThickness1")),
+    mountingPlatesThickness2: Number(formData.get("mountingPlatesThickness2")),
+    verticalHorizPartitionsThickness: Number(
+      formData.get("verticalHorizPartitionsThickness")
+    ),
+    horizontalPartitionRequired:
+      formData.get("horizontalPartitionRequired") === "true",
+    verticalPartitionRequired:
+      formData.get("verticalPartitionRequired") === "true",
+    horizontalPartitionsDepth: Number(
+      formData.get("horizontalPartitionsDepth")
+    ),
+    verticalPartitionsDepth: Number(formData.get("verticalPartitionsDepth")),
   };
 
   const validatedFields = panelDetailsSchema.safeParse(data);
-
+  console.log(validatedFields);
   if (!validatedFields.success) {
     const fieldErrors: Record<string, string[]> = {};
 

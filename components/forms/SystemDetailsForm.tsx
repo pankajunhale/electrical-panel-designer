@@ -52,9 +52,9 @@ export function SystemDetailsForm({
   const form = useForm<SystemDetailsFormData>({
     resolver: zodResolver(systemDetailsSchema),
     defaultValues: {
-      supplyLineVoltage: "415",
+      supplyLineVoltage: 415,
       supplySystem: SUPPLY_SYSTEMS[0],
-      controlVoltage: "240",
+      controlVoltage: 240,
       panelType: PANEL_TYPES[0],
       numberOfIncomers: 2,
       numberOfOutgoingFeeders: 8,

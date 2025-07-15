@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 export const panelDetailsSchema = z.object({
+  panelMake: z.string().min(1, "Required"),
+  incomerMake: z.string().min(1, "Required"),
+  feederMake: z.string().min(1, "Required"),
+  controlMake: z.string().min(1, "Required"),
   maxHeightFeedersSection: z
     .number()
     .min(700, "Min 700mm")

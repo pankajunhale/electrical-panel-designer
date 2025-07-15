@@ -56,6 +56,15 @@ export interface WizardFormData {
     incomerMake: string;
     feederMake: string;
     controlMake: string;
+    maxHeightFeedersSection: number;
+    panelDoorsThickness: number;
+    mountingPlatesThickness1: number;
+    mountingPlatesThickness2: number;
+    verticalHorizPartitionsThickness: number;
+    horizontalPartitionsDepth: number;
+    verticalPartitionsDepth: number;
+    horizontalPartitionRequired: boolean;
+    verticalPartitionRequired: boolean;
   };
   systemDetails: {
     systemType: string;
@@ -195,6 +204,24 @@ export async function computeWizardData(
           userFormData?.makeDetails?.feederMake || "Schneider Electric",
         controlMake:
           userFormData?.makeDetails?.controlMake || "Schneider Electric",
+        maxHeightFeedersSection:
+          userFormData?.makeDetails?.maxHeightFeedersSection || 1700,
+        panelDoorsThickness:
+          userFormData?.makeDetails?.panelDoorsThickness || 2,
+        mountingPlatesThickness1:
+          userFormData?.makeDetails?.mountingPlatesThickness1 || 2,
+        mountingPlatesThickness2:
+          userFormData?.makeDetails?.mountingPlatesThickness2 || 2,
+        verticalHorizPartitionsThickness:
+          userFormData?.makeDetails?.verticalHorizPartitionsThickness || 2,
+        horizontalPartitionsDepth:
+          userFormData?.makeDetails?.horizontalPartitionsDepth || 2,
+        verticalPartitionsDepth:
+          userFormData?.makeDetails?.verticalPartitionsDepth || 400,
+        horizontalPartitionRequired:
+          userFormData?.makeDetails?.horizontalPartitionRequired || false,
+        verticalPartitionRequired:
+          userFormData?.makeDetails?.verticalPartitionRequired || false,
       },
       systemDetails: {
         systemType: userFormData?.systemDetails?.systemType || "MCC Panel",

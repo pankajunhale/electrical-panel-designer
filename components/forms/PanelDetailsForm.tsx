@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { useTransition } from "react";
 import { useActionState } from "react";
+import { submitPanelDetails } from "@/actions/panel-details";
 
 interface PanelDetailsFormProps {
   onNext: (data: PanelDetailsFormData) => void;
@@ -35,19 +36,18 @@ export function PanelDetailsForm({
   isLoading = false,
 }: PanelDetailsFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [formAction] = useActionState(
-    async (prevState: unknown, formData: PanelDetailsFormData) => {
-      // You can call your server action here
-      // For demo, just call onNext
-      onNext(formData);
-      return formData;
-    },
-    null
-  );
+  const [state, formAction] = useActionState(submitPanelDetails, {
+    errors: {},
+    message: "",
+  });
 
   const form = useForm<PanelDetailsFormData>({
     resolver: zodResolver(panelDetailsSchema),
     defaultValues: initialData || {
+      panelMake: "Schneider Electric",
+      incomerMake: "Schneider Electric",
+      feederMake: "Schneider Electric",
+      controlMake: "Schneider Electric",
       maxHeightFeedersSection: 1700,
       panelDoorsThickness: 2,
       mountingPlatesThickness1: 2,
@@ -64,12 +64,23 @@ export function PanelDetailsForm({
   useEffect(() => {
     console.log("PanelDetailsForm initialData:", initialData);
   }, [initialData]);
-
+  // Handle successful submission
+  useEffect(() => {
+    if (state.data && Object.keys(state.errors).length === 0) {
+      onNext(state.data);
+    }
+  }, [state, onNext]);
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
-          startTransition(() => formAction(data));
+          startTransition(() => {
+            const formData = new FormData();
+            Object.entries(data).forEach(([key, value]) => {
+              formData.append(key, value.toString());
+            });
+            formAction(formData);
+          });
         })}
         className="space-y-8"
       >
