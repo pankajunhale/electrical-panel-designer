@@ -25,20 +25,51 @@ import {
   RatingDetailsFormData,
 } from "@/schema/rating-details";
 import { useEffect } from "react";
+import { submitRatingDetails } from "@/actions/rating-details";
 
 const CURRENT_RATINGS = [
+  "1A",
   "2A",
+  "3A",
+  "4A",
+  "5A",
+  "6A",
+  "7A",
+  "8A",
   "10A",
   "16A",
+  "18A",
+  "20A",
+  "22A",
+  "24A",
   "25A",
+  "26A",
+  "28A",
+  "30A",
   "32A",
+  "34A",
+  "35A",
+  "36A",
+  "38A",
   "40A",
+  "45A",
+  "46A",
+  "47A",
+  "48A",
+  "50A",
+  "55A",
+  "60A",
   "63A",
+  "65A",
+  "70A",
+  "80A",
   "100A",
   "125A",
   "160A",
   "200A",
   "250A",
+  "280A",
+  "300A",
   "315A",
   "400A",
   "500A",
@@ -65,10 +96,10 @@ export function RatingDetailsForm({
   numberOfFeeders,
 }: RatingDetailsFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [formAction] = useActionState(async (prev, data) => {
-    onNext(data);
-    return data;
-  }, null);
+  const [state, formAction] = useActionState(submitRatingDetails, {
+    errors: {},
+    message: "",
+  });
   const incomers = Array.from({ length: numberOfIncomers }, (_, i) => ({
     currentRating: initialData?.incomers?.[i]?.currentRating || "100A",
     wiringMaterial: initialData?.incomers?.[i]?.wiringMaterial || "Copper",
@@ -89,12 +120,23 @@ export function RatingDetailsForm({
     form.reset({ incomers, feeders });
   }, [numberOfIncomers, numberOfFeeders, initialData, form]);
 
+  // Handle successful submission
+  useEffect(() => {
+    if (state.data && Object.keys(state.errors).length === 0) {
+      onNext(state.data);
+    }
+  }, [state, onNext]);
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit((data) =>
-          startTransition(() => formAction(data))
-        )}
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => {
+            const formData = new FormData();
+            formData.append("incomers", JSON.stringify(data.incomers));
+            formData.append("feeders", JSON.stringify(data.feeders));
+            formAction(formData);
+          });
+        })}
         className="space-y-8"
       >
         {/* Incomer Section */}
@@ -323,6 +365,9 @@ export function RatingDetailsForm({
           </Button>
         </div>
       </form>
+      <pre className="mt-4 bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+        {JSON.stringify(form.getValues(), null, 2)}
+      </pre>
     </Form>
   );
 }

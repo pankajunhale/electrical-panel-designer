@@ -15,12 +15,12 @@ export interface WizardFormData {
   incomerDetails: {
     incomers: Array<{
       name: string;
-      ampereRating: string;
+      ampereRating: number;
     }>;
     feeders: Array<{
       name: string;
       starterType: string;
-      feederAmps: string;
+      feederAmps: number;
       connectToIncomer: string;
     }>;
   };
@@ -39,7 +39,7 @@ export interface WizardFormData {
   incomerTypes: {
     incomers: Array<{
       type: string;
-      rating: string;
+      rating: number;
       protection: string;
     }>;
   };
@@ -103,15 +103,15 @@ export async function computeWizardData(
         name: "Main Incomer (S/D)",
         ampereRating:
           sDEquipment.length > 0
-            ? Math.max(...sDEquipment.map((eq) => eq.rating * 1.5)).toString()
-            : "100",
+            ? Math.max(...sDEquipment.map((eq) => eq.rating * 1.5))
+            : 100,
       },
       {
         name: "VFD Incomer",
         ampereRating:
           vfdEquipment.length > 0
-            ? Math.max(...vfdEquipment.map((eq) => eq.rating * 1.5)).toString()
-            : "200",
+            ? Math.max(...vfdEquipment.map((eq) => eq.rating * 1.5))
+            : 200,
       },
     ];
 
@@ -124,20 +124,22 @@ export async function computeWizardData(
           : equipment.starterType === "VFD"
           ? "VFD"
           : "DOL",
-      feederAmps: equipment.rating.toString(),
+      feederAmps: equipment.rating,
       connectToIncomer:
         equipment.starterType === "VFD" ? "VFD Incomer" : "Main Incomer (S/D)",
     }));
 
     // Create rating details
     const incomerRatings = incomers.map((incomer) => ({
-      currentRating: `${Math.ceil(parseFloat(incomer.ampereRating) * 1.25)}A`,
+      currentRating: `${Math.ceil(
+        parseFloat(incomer.ampereRating.toString()) * 1.25
+      )}A`,
       wiringMaterial: "Copper",
       cablesOrBusBars: "BusBars",
     }));
 
     const feederRatings = feeders.map((feeder) => ({
-      currentRating: `${Math.ceil(parseFloat(feeder.feederAmps) * 1.25)}A`,
+      currentRating: `${Math.ceil(feeder.feederAmps * 1.25)}A`,
       wiringMaterial: "Copper",
       cablesOrBusBars: "Cables",
     }));
@@ -154,7 +156,7 @@ export async function computeWizardData(
       name: feeder.name,
       starterType: feeder.starterType,
       protection: "MCCB",
-      cableSize: `${Math.ceil(parseFloat(feeder.feederAmps) / 3)} sq.mm`,
+      cableSize: `${Math.ceil(feeder.feederAmps / 3)} sq.mm`,
     }));
 
     // Merge with user form data if provided
@@ -223,14 +225,8 @@ export async function generateGALayout(userFormData: WizardFormData) {
 
   try {
     // Extract key data for GA layout
-    const numberOfIncomers = parseInt(
-      userFormData.basicInfo.numberOfIncomers,
-      10
-    );
-    const numberOfFeeders = parseInt(
-      userFormData.basicInfo.numberOfOutgoingFeeders,
-      10
-    );
+    const numberOfIncomers = userFormData.basicInfo.numberOfIncomers;
+    const numberOfFeeders = userFormData.basicInfo.numberOfOutgoingFeeders;
 
     console.log("📊 GA Layout parameters:", {
       numberOfIncomers,
@@ -255,14 +251,8 @@ function generateGALayoutFromData(
 ): GALayoutItem[] {
   console.log("🎨 generateGALayoutFromData called with:", userFormData);
 
-  const numberOfIncomers = parseInt(
-    userFormData.basicInfo.numberOfIncomers,
-    10
-  );
-  const numberOfFeeders = parseInt(
-    userFormData.basicInfo.numberOfOutgoingFeeders,
-    10
-  );
+  const numberOfIncomers = userFormData.basicInfo.numberOfIncomers;
+  const numberOfFeeders = userFormData.basicInfo.numberOfOutgoingFeeders;
 
   // Create a proper GA layout with all essential components
   const layout: GALayoutItem[] = [];

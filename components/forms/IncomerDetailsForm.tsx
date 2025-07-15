@@ -89,9 +89,9 @@ export function IncomerDetailsForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit((data) =>
-          startTransition(() => onNext(data))
-        )}
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => onNext(data));
+        })}
         className="space-y-8"
       >
         {/* Incomer Details Section */}

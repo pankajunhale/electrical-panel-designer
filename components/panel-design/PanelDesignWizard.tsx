@@ -201,14 +201,8 @@ export function PanelDesignWizard() {
   };
 
   const renderCurrentStep = () => {
-    const numberOfIncomers = parseInt(
-      wizardData.basicInfo?.numberOfIncomers || "1",
-      10
-    );
-    const numberOfFeeders = parseInt(
-      wizardData.basicInfo?.numberOfOutgoingFeeders || "1",
-      10
-    );
+    const numberOfIncomers = wizardData.basicInfo?.numberOfIncomers || 1;
+    const numberOfFeeders = wizardData.basicInfo?.numberOfOutgoingFeeders || 1;
 
     // Show loading state while computing data
     if (isComputingData) {
@@ -264,7 +258,7 @@ export function PanelDesignWizard() {
             initialData={wizardData.incomerTypes}
             isLoading={isLoading}
             numberOfIncomers={numberOfIncomers}
-            numberOfFeeders={numberOfFeeders}
+            // numberOfFeeders={numberOfFeeders}
           />
         );
       case 5:
