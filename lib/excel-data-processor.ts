@@ -231,7 +231,7 @@ export class ExcelDataProcessor {
     );
 
     // Create incomers based on starter types
-    const incomers = [];
+    const incomers: { name: string; ampereRating: string }[] = [];
     let incomerIndex = 1;
 
     if (summary.equipmentByStarterType["S/D"]) {
@@ -263,7 +263,7 @@ export class ExcelDataProcessor {
     }
 
     // Create feeders from equipment data
-    const feeders = validEquipment.map((equipment, index) => ({
+    const feeders = validEquipment.map((equipment) => ({
       name: equipment.description,
       starterType: this.mapStarterType(equipment.starterType),
       feederAmps: equipment.rating.toString(),
@@ -301,7 +301,10 @@ export class ExcelDataProcessor {
     }
   }
 
-  private getIncomerForEquipment(starterType: string, incomers: any[]): string {
+  private getIncomerForEquipment(
+    starterType: string,
+    incomers: { name: string; ampereRating: string }[]
+  ): string {
     switch (starterType) {
       case "S/D":
         return (
@@ -403,7 +406,7 @@ export class ExcelDataProcessor {
     };
   }
 
-  public generateDataTables(): Record<string, any[]> {
+  public generateDataTables(): Record<string, unknown[]> {
     const summary = this.computeEquipmentSummary();
     const formData = this.computeAllFormData();
 

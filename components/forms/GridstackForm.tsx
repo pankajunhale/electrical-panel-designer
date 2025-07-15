@@ -3,11 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  fetchEquipmentData,
-  type EquipmentData,
-} from "@/actions/equipment-data";
-import {
   computeWizardData,
+  WizardFormData,
   type GALayoutItem,
 } from "@/actions/wizard-computation";
 
@@ -19,23 +16,25 @@ interface GridstackFormProps {
 }
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack.min.css";
+import { type EquipmentData } from "@/actions/equipment-data";
 // Extended GALayoutItem with id for tracking
 interface GridWidget extends GALayoutItem {
   id: string;
 }
 
 // Component for rendering equipment widgets
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EquipmentWidget = ({
   component,
-  isResize = false,
 }: {
   component: GridWidget;
   isResize?: boolean;
 }) => {
   let color = "bg-gray-200 text-gray-800 border-gray-400";
-  let title = component.label;
+  const title = component.label;
   let subtitle = "";
-
+  const height = component.h * 60;
+  const width = component.w * 8.33;
   switch (component.type) {
     case "HBB":
       color = "bg-blue-200 text-blue-900 border-blue-400";
@@ -73,6 +72,9 @@ const EquipmentWidget = ({
     >
       <h3 className="font-bold text-sm mb-1">{title}</h3>
       {subtitle && <p className="text-xs opacity-75">{subtitle}</p>}
+      <div className="text-xs opacity-75">
+        {height}x{width}
+      </div>
     </div>
   );
 };
@@ -128,8 +130,8 @@ const GridItem = ({
 export function GridstackForm({
   onNext,
   onBack,
-  initialData,
   isLoading = false,
+  initialData,
 }: GridstackFormProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [isGridReady, setIsGridReady] = useState(false);
@@ -168,11 +170,6 @@ export function GridstackForm({
     // Store the grid instance
     gridInstanceRef.current = grid;
 
-    // Add widgets programmatically
-    // grid.addWidget({ w: 2, content: "Widget 1" });
-    // grid.addWidget({ w: 4, content: "Widget 2" });
-    // grid.addWidget({ w: 2, h: 2, content: "Widget 3" });
-
     return () => {
       grid.destroy();
       gridInstanceRef.current = null;
@@ -197,10 +194,13 @@ export function GridstackForm({
         setIsLoadingData(true);
         console.log("🔄 Loading equipment data...");
 
-        const equipment = await fetchEquipmentData();
-        console.log("📊 Equipment data loaded:", equipment);
+        // const equipment = await fetchEquipmentData(); // Removed unused variable
+        // console.log("📊 Equipment data loaded:", equipment);
 
-        const computedData = await computeWizardData(equipment);
+        const computedData = await computeWizardData(
+          equipmentComponents as unknown as EquipmentData[],
+          initialData?.gridLayout as unknown as Partial<WizardFormData>
+        ); // Changed to use equipmentComponents from state
         console.log("✅ Computed data:", computedData);
         console.log(
           "🎨 Equipment components found:",
@@ -240,7 +240,7 @@ export function GridstackForm({
     };
 
     loadData();
-  }, []);
+  }, [equipmentComponents]); // Added equipmentComponents to dependency array
 
   // Add component to grid
   const addComponentToGrid = (component: GALayoutItem) => {
@@ -292,40 +292,6 @@ export function GridstackForm({
     console.log(`🗑️ Removed widget: ${id}`);
   };
 
-  // Test function for HBB component
-  const testHBBComponent = () => {
-    console.log("🧪 Test HBB clicked - Grid status:", {
-      isGridReady,
-      isLoadingData,
-    });
-
-    if (!isGridReady) {
-      console.log("❌ Grid not ready for test");
-      return;
-    }
-
-    const testHBB: GALayoutItem = {
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 1,
-      label: "HBB",
-      type: "HBB",
-    };
-
-    console.log("🧪 Testing HBB component addition...");
-    addComponentToGrid(testHBB);
-  };
-
-  // Debug grid status
-  const debugGridStatus = () => {
-    console.log("🔍 Grid Debug Info:", {
-      isGridReady,
-      isLoadingData,
-      gridWidgetsCount: gridWidgets.length,
-    });
-  };
-
   const handleSubmit = () => {
     const layout = gridWidgets.map((widget) => ({
       id: widget.id,
@@ -371,21 +337,6 @@ export function GridstackForm({
               >
                 Grid: {isGridReady ? "Ready" : "Initializing"}
               </span>
-              <button
-                onClick={debugGridStatus}
-                className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-                title="Debug grid status"
-              >
-                Debug
-              </button>
-              <button
-                onClick={testHBBComponent}
-                className="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
-                title="Test HBB component"
-                disabled={!isGridReady}
-              >
-                Test HBB
-              </button>
             </div>
           </div>
 
@@ -466,7 +417,7 @@ export function GridstackForm({
                 />
               ))}
             </div>
-            <div ref={gridRefNew} className="grid-stack">
+            <div ref={gridRefNew} className="grid-stack border-2 border-dashed">
               {/* Grid items will be added here */}
               {equipmentComponents.map((widget, index) => (
                 <div

@@ -5,12 +5,12 @@ import { EquipmentData } from "./equipment-data";
 
 export interface WizardFormData {
   basicInfo: {
-    supplyLineVoltage: string;
+    supplyLineVoltage: number;
     supplySystem: string;
-    controlVoltage: string;
+    controlVoltage: number;
     panelType: string;
-    numberOfIncomers: string;
-    numberOfOutgoingFeeders: string;
+    numberOfIncomers: number;
+    numberOfOutgoingFeeders: number;
   };
   incomerDetails: {
     incomers: Array<{
@@ -96,12 +96,6 @@ export async function computeWizardData(
     const vfdEquipment = validEquipment.filter(
       (eq) => eq.starterType === "VFD"
     );
-    const dolEquipment = validEquipment.filter(
-      (eq) => eq.starterType === "DOL"
-    );
-    const singlePhaseEquipment = validEquipment.filter(
-      (eq) => eq.starterType === "1 PHASE DOL"
-    );
 
     // Create incomers based on starter types
     const incomers = [
@@ -122,15 +116,13 @@ export async function computeWizardData(
     ];
 
     // Create feeders from equipment data
-    const feeders = validEquipment.map((equipment, index) => ({
+    const feeders = validEquipment.map((equipment) => ({
       name: equipment.description,
       starterType:
         equipment.starterType === "S/D"
           ? "Star-Delta"
           : equipment.starterType === "VFD"
           ? "VFD"
-          : equipment.starterType === "DOL"
-          ? "DOL"
           : "DOL",
       feederAmps: equipment.rating.toString(),
       connectToIncomer:
@@ -168,17 +160,15 @@ export async function computeWizardData(
     // Merge with user form data if provided
     const formData: WizardFormData = {
       basicInfo: {
-        supplyLineVoltage: userFormData?.basicInfo?.supplyLineVoltage || "415",
+        supplyLineVoltage: userFormData?.basicInfo?.supplyLineVoltage || 415,
         supplySystem:
           userFormData?.basicInfo?.supplySystem || "3 Phase 4 Wire, 50Hz",
-        controlVoltage: userFormData?.basicInfo?.controlVoltage || "240",
+        controlVoltage: userFormData?.basicInfo?.controlVoltage || 240,
         panelType: userFormData?.basicInfo?.panelType || "MCC Panel",
         numberOfIncomers:
-          userFormData?.basicInfo?.numberOfIncomers ||
-          incomers.length.toString(),
+          userFormData?.basicInfo?.numberOfIncomers || incomers.length,
         numberOfOutgoingFeeders:
-          userFormData?.basicInfo?.numberOfOutgoingFeeders ||
-          feeders.length.toString(),
+          userFormData?.basicInfo?.numberOfOutgoingFeeders || feeders.length,
       },
       incomerDetails: {
         incomers: userFormData?.incomerDetails?.incomers || incomers,
@@ -214,7 +204,7 @@ export async function computeWizardData(
 
     // Generate GA layout
     const gaLayout = generateGALayoutFromData(formData);
-
+    console.log("🎨 GA layout generated:", gaLayout);
     revalidatePath("/cp/panel-design");
 
     return {

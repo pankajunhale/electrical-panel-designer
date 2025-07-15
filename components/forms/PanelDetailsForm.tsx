@@ -4,13 +4,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   panelDetailsSchema,
   PanelDetailsFormData,
 } from "@/schema/panel-details";
 import { useEffect } from "react";
+import {
+  Form,
+  FormItem,
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useTransition } from "react";
+import { useActionState } from "react";
 
 interface PanelDetailsFormProps {
   onNext: (data: PanelDetailsFormData) => void;
@@ -25,191 +34,288 @@ export function PanelDetailsForm({
   initialData,
   isLoading = false,
 }: PanelDetailsFormProps) {
-  // If we have initial data, make the form read-only
-  const isReadOnly = !!initialData;
+  const [isPending, startTransition] = useTransition();
+  const [formAction] = useActionState(
+    async (prevState: unknown, formData: PanelDetailsFormData) => {
+      // You can call your server action here
+      // For demo, just call onNext
+      onNext(formData);
+      return formData;
+    },
+    null
+  );
 
-  // Auto-submit when form is read-only (has initial data)
-  useEffect(() => {
-    if (isReadOnly && initialData) {
-      // Auto-proceed with the initial data
-      onNext(initialData);
-    }
-  }, [isReadOnly, initialData, onNext]);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting, isValid },
-  } = useForm<PanelDetailsFormData>({
+  const form = useForm<PanelDetailsFormData>({
     resolver: zodResolver(panelDetailsSchema),
     defaultValues: initialData || {
       maxHeightFeedersSection: 1700,
-      panelDoorsThickness: 1.6,
+      panelDoorsThickness: 2,
       mountingPlatesThickness1: 2,
       mountingPlatesThickness2: 2,
-      verticalHorizPartitionsThickness: 1.6,
+      verticalHorizPartitionsThickness: 2,
       horizontalPartitionRequired: false,
       verticalPartitionRequired: false,
       horizontalPartitionsDepth: 300,
       verticalPartitionsDepth: 400,
     },
+    mode: "onChange",
   });
 
-  // Convert string input to number for numeric fields
-  const handleNumberChange =
-    (field: keyof PanelDetailsFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setValue(field, e.target.value === "" ? NaN : Number(e.target.value), {
-        shouldValidate: true,
-      });
-    };
-
-  const onSubmit = (data: PanelDetailsFormData) => {
-    onNext(data);
-  };
+  useEffect(() => {
+    console.log("PanelDetailsForm initialData:", initialData);
+  }, [initialData]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>
-            Maximum Height of Feeders Section (700mm to 2500mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            className="bg-yellow-100"
-            {...register("maxHeightFeedersSection", { valueAsNumber: true })}
-            onChange={handleNumberChange("maxHeightFeedersSection")}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => formAction(data));
+        })}
+        className="space-y-8"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="maxHeightFeedersSection"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Maximum Height of Feeders Section (700mm to 2500mm)
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    className="bg-yellow-100"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.maxHeightFeedersSection && (
-            <p className="text-xs text-destructive">
-              {errors.maxHeightFeedersSection.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Panel Doors Thickness (mm) <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("panelDoorsThickness", { valueAsNumber: true })}
-            onChange={handleNumberChange("panelDoorsThickness")}
+          <FormField
+            control={form.control}
+            name="panelDoorsThickness"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Panel Doors Thickness (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.panelDoorsThickness && (
-            <p className="text-xs text-destructive">
-              {errors.panelDoorsThickness.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Mounting Plates Thickness (mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("mountingPlatesThickness1", { valueAsNumber: true })}
-            onChange={handleNumberChange("mountingPlatesThickness1")}
+          <FormField
+            control={form.control}
+            name="mountingPlatesThickness1"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Mounting Plates Thickness (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.mountingPlatesThickness1 && (
-            <p className="text-xs text-destructive">
-              {errors.mountingPlatesThickness1.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Mounting Plates Thickness (mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("mountingPlatesThickness2", { valueAsNumber: true })}
-            onChange={handleNumberChange("mountingPlatesThickness2")}
+          <FormField
+            control={form.control}
+            name="mountingPlatesThickness2"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Mounting Plates Thickness (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.mountingPlatesThickness2 && (
-            <p className="text-xs text-destructive">
-              {errors.mountingPlatesThickness2.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Vertical & Horiz. Partitions Thickness (mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("verticalHorizPartitionsThickness", {
-              valueAsNumber: true,
-            })}
-            onChange={handleNumberChange("verticalHorizPartitionsThickness")}
+          <FormField
+            control={form.control}
+            name="verticalHorizPartitionsThickness"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Vertical & Horiz. Partitions Thickness (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.verticalHorizPartitionsThickness && (
-            <p className="text-xs text-destructive">
-              {errors.verticalHorizPartitionsThickness.message}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox {...register("horizontalPartitionRequired")} />
-          <Label>Horizontal Partition Required</Label>
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Horizontal Partitions Depth (mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("horizontalPartitionsDepth", { valueAsNumber: true })}
-            onChange={handleNumberChange("horizontalPartitionsDepth")}
+          <FormField
+            control={form.control}
+            name="horizontalPartitionRequired"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel>Horizontal Partition Required</FormLabel>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.horizontalPartitionsDepth && (
-            <p className="text-xs text-destructive">
-              {errors.horizontalPartitionsDepth.message}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox {...register("verticalPartitionRequired")} />
-          <Label>Vertical Partition Required</Label>
-        </div>
-        <div className="space-y-2">
-          <Label>
-            Vertical Partitions Depth (mm){" "}
-            <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            type="number"
-            {...register("verticalPartitionsDepth", { valueAsNumber: true })}
-            onChange={handleNumberChange("verticalPartitionsDepth")}
+          <FormField
+            control={form.control}
+            name="horizontalPartitionsDepth"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Horizontal Partitions Depth (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.verticalPartitionsDepth && (
-            <p className="text-xs text-destructive">
-              {errors.verticalPartitionsDepth.message}
-            </p>
-          )}
+          <FormField
+            control={form.control}
+            name="verticalPartitionRequired"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel>Vertical Partition Required</FormLabel>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="verticalPartitionsDepth"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Vertical Partitions Depth (mm){" "}
+                  <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-      </div>
-      <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button type="submit" disabled={isSubmitting || isLoading || !isValid}>
-          {isSubmitting || isLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="loader spinner-border spinner-border-sm"></span>{" "}
-              Saving...
-            </span>
-          ) : (
-            "Next"
-          )}
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-between pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isPending || isLoading}>
+            {isPending || isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="loader spinner-border spinner-border-sm"></span>{" "}
+                Saving...
+              </span>
+            ) : (
+              "Next"
+            )}
+          </Button>
+        </div>
+        <pre className="mt-4 bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+          {JSON.stringify(form.watch(), null, 2)}
+        </pre>
+      </form>
+    </Form>
   );
 }

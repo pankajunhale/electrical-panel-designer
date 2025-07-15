@@ -158,9 +158,10 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-slate-600 dark:text-slate-400">
-                "shadcn/ui has completely transformed how I build UIs. The
+                &quot;shadcn/ui has completely transformed how I build UIs. The
                 components are beautiful, accessible, and incredibly easy to
-                customize. It's become an essential part of my toolkit."
+                customize. It&apos;s become an essential part of my
+                toolkit.&quot;
               </p>
             </CardContent>
           </Card>
@@ -188,9 +189,9 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-slate-600 dark:text-slate-400">
-                "The combination of Next.js 15 and shadcn/ui is absolutely
+                &quot;The combination of Next.js 15 and shadcn/ui is absolutely
                 incredible. I can build production-ready applications in record
-                time with beautiful, consistent design."
+                time with beautiful, consistent design.&quot;
               </p>
             </CardContent>
           </Card>

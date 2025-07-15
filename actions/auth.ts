@@ -2,12 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  loginSchema,
-  registerSchema,
-  type LoginFormData,
-  type RegisterFormData,
-} from "@/schema/auth";
+import { loginSchema, registerSchema } from "@/schema/auth";
 
 export async function loginAction(
   prevState: { errors: Record<string, string[]>; message: string },

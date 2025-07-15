@@ -24,10 +24,15 @@ import {
 
 interface WizardData {
   basicInfo?: BasicInfoFormData;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   incomerDetails?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ratingDetails?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   incomerTypes?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   panelDetails?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   gridLayout?: any;
   computedData?: WizardFormData;
 }
@@ -143,6 +148,7 @@ export function PanelDesignWizard() {
     computeAllFormData();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleNext = async (stepData: any) => {
     console.log(
       `🔄 Step ${currentStep} - handleNext called with data:`,
@@ -318,7 +324,8 @@ export function PanelDesignWizard() {
                 key={step.id}
                 className={`flex flex-1 items-center ${
                   index < steps.length - 1 ? "mr-4" : ""
-                }`}
+                } cursor-pointer`}
+                onClick={() => setCurrentStep(step.id)}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${

@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface DataTableProps {
   title: string;
   data: Array<Record<string, any>>;
@@ -21,6 +22,7 @@ export function DataTable({
   columns,
   className = "",
 }: DataTableProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCellValue = (item: Record<string, any>, column: any) => {
     const value = item[column.key];
 

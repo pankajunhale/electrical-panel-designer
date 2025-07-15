@@ -10,16 +10,18 @@ type ActionState = {
 
 export async function submitBasicInfo(
   prevState: ActionState,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formData: FormData
 ): Promise<ActionState> {
+  console.log(formData);
   const data = {
     // System Details
-    supplyLineVoltage: formData.get("supplyLineVoltage") as string,
+    supplyLineVoltage: Number(formData.get("supplyLineVoltage")),
     supplySystem: formData.get("supplySystem") as string,
-    controlVoltage: formData.get("controlVoltage") as string,
+    controlVoltage: Number(formData.get("controlVoltage")),
     panelType: formData.get("panelType") as string,
-    numberOfIncomers: formData.get("numberOfIncomers") as string,
-    numberOfOutgoingFeeders: formData.get("numberOfOutgoingFeeders") as string,
+    numberOfIncomers: Number(formData.get("numberOfIncomers")),
+    numberOfOutgoingFeeders: Number(formData.get("numberOfOutgoingFeeders")),
     saveAsDefault: formData.get("saveAsDefault") === "on",
     // Drawing Details
     title: formData.get("title") as string,
@@ -41,10 +43,10 @@ export async function submitBasicInfo(
   };
 
   const validatedFields = basicInfoSchema.safeParse(data);
-
+  console.log(validatedFields);
   if (!validatedFields.success) {
     const fieldErrors: Record<string, string[]> = {};
-
+    console.log(validatedFields.error.flatten().fieldErrors);
     // Convert the field errors to the expected format
     Object.entries(validatedFields.error.flatten().fieldErrors).forEach(
       ([key, value]) => {

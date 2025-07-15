@@ -4,14 +4,14 @@ export const incomerDetailsSchema = z.object({
   incomers: z.array(
     z.object({
       name: z.string().min(1, "Name is required"),
-      ampereRating: z.string().min(1, "Ampere Rating is required"),
+      ampereRating: z.number(),
     })
   ),
   feeders: z.array(
     z.object({
       name: z.string().min(1, "Feeder Name is required"),
       starterType: z.string().min(1, "Starter Type is required"),
-      feederAmps: z.string().min(1, "Feeder Amps is required"),
+      feederAmps: z.number(),
       connectToIncomer: z.string().min(1, "Connect to Incomer is required"),
     })
   ),

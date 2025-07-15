@@ -5,9 +5,9 @@ export const feederIncomerTypesSchema = z.object({
     z.object({
       incomerType: z.string().min(1, "Required"),
       phase: z.string().min(1, "Required"),
-      incomerKA: z.string().min(1, "Required"),
+      incomerKA: z.number(),
       meterRequired: z.object({ amp: z.boolean() }),
-      alBusBars: z.string().min(1, "Required"),
+      alBusBars: z.number(),
     })
   ),
 });

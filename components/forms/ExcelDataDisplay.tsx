@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, SummaryCard, DataGrid } from "@/components/ui/data-table";
 import {
   ExcelDataProcessor,
@@ -14,14 +13,13 @@ import {
   Gauge,
   Grid3X3,
   FileText,
-  Calculator,
   Database,
   BarChart3,
 } from "lucide-react";
 
 interface ExcelDataDisplayProps {
   equipment: ExcelEquipment[];
-  onApplyToWizard: (formData: any) => void;
+  onApplyToWizard: (formData: unknown) => void;
 }
 
 export function ExcelDataDisplay({
@@ -81,7 +79,8 @@ export function ExcelDataDisplay({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DataTable
           title="Equipment by Type"
-          data={dataTables.equipmentByType}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data={dataTables.equipmentByType as Record<string, any>[]}
           columns={[
             { key: "EquipmentType", label: "Equipment Type" },
             { key: "Quantity", label: "Quantity", type: "number" },
@@ -89,7 +88,8 @@ export function ExcelDataDisplay({
         />
         <DataTable
           title="Equipment by Starter Type"
-          data={dataTables.equipmentByStarterType}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data={dataTables.equipmentByStarterType as Record<string, any>[]}
           columns={[
             { key: "StarterType", label: "Starter Type" },
             { key: "Quantity", label: "Quantity", type: "number" },
@@ -99,7 +99,8 @@ export function ExcelDataDisplay({
 
       <DataTable
         title="Power Distribution"
-        data={dataTables.equipmentSummary}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={dataTables.equipmentSummary as Record<string, any>[]}
         columns={[
           { key: "Category", label: "Category" },
           { key: "Count", label: "Count", type: "number" },
@@ -195,7 +196,8 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Incomer Details"
-        data={dataTables.incomers}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={dataTables.incomers as Record<string, any>[]}
         columns={[
           { key: "Incomer", label: "Incomer" },
           { key: "AmpereRating", label: "Ampere Rating" },
@@ -207,7 +209,8 @@ export function ExcelDataDisplay({
 
       <DataTable
         title="Feeder Details"
-        data={dataTables.feeders}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={dataTables.feeders as Record<string, any>[]}
         columns={[
           { key: "Equipment", label: "Equipment" },
           { key: "StarterType", label: "Starter Type" },
@@ -225,14 +228,17 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Incomer Ratings"
-        data={computedData.ratingDetails.incomers.map((inc, index) => ({
-          Incomer:
-            computedData.incomerDetails.incomers[index]?.name ||
-            `Incomer ${index + 1}`,
-          CurrentRating: inc.currentRating,
-          WiringMaterial: inc.wiringMaterial,
-          CableType: inc.cablesOrBusBars,
-        }))}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={computedData.ratingDetails.incomers.map(
+          (inc: any, index: number) => ({
+            Incomer:
+              computedData.incomerDetails.incomers[index]?.name ||
+              `Incomer ${index + 1}`,
+            CurrentRating: inc.currentRating,
+            WiringMaterial: inc.wiringMaterial,
+            CableType: inc.cablesOrBusBars,
+          })
+        )}
         columns={[
           { key: "Incomer", label: "Incomer" },
           { key: "CurrentRating", label: "Current Rating" },
@@ -243,14 +249,17 @@ export function ExcelDataDisplay({
 
       <DataTable
         title="Feeder Ratings"
-        data={computedData.ratingDetails.feeders.map((feed, index) => ({
-          Equipment:
-            computedData.incomerDetails.feeders[index]?.name ||
-            `Feeder ${index + 1}`,
-          CurrentRating: feed.currentRating,
-          WiringMaterial: feed.wiringMaterial,
-          CableType: feed.cablesOrBusBars,
-        }))}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={computedData.ratingDetails.feeders.map(
+          (feed: any, index: number) => ({
+            Equipment:
+              computedData.incomerDetails.feeders[index]?.name ||
+              `Feeder ${index + 1}`,
+            CurrentRating: feed.currentRating,
+            WiringMaterial: feed.wiringMaterial,
+            CableType: feed.cablesOrBusBars,
+          })
+        )}
         columns={[
           { key: "Equipment", label: "Equipment" },
           { key: "CurrentRating", label: "Current Rating" },
@@ -265,16 +274,22 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Incomer Types"
-        data={computedData.incomerTypes.incomers.map((inc, index) => ({
-          Incomer:
-            computedData.incomerDetails.incomers[index]?.name ||
-            `Incomer ${index + 1}`,
-          Phase: inc.phase,
-          KARating: `${inc.kARating}kA`,
-          MetersRequired: inc.metersRequired,
-          BusCouplerType: inc.busCouplerType,
-          CableSpecs: inc.cableSpecs,
-        }))}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={computedData.incomerTypes.incomers.map(
+          (inc: any, idx: number) => {
+            const name =
+              computedData.incomerDetails.incomers[idx]?.name ||
+              `Incomer ${idx + 1}`;
+            return {
+              Incomer: name,
+              Phase: inc.phase,
+              KARating: `${inc.kARating}kA`,
+              MetersRequired: inc.metersRequired,
+              BusCouplerType: inc.busCouplerType,
+              CableSpecs: inc.cableSpecs,
+            };
+          }
+        )}
         columns={[
           { key: "Incomer", label: "Incomer" },
           { key: "Phase", label: "Phase" },
@@ -287,16 +302,17 @@ export function ExcelDataDisplay({
 
       <DataTable
         title="Feeder Types"
-        data={computedData.incomerTypes.feeders.map((feed, index) => ({
-          Equipment:
-            computedData.incomerDetails.feeders[index]?.name ||
-            `Feeder ${index + 1}`,
-          Phase: feed.phase,
-          KARating: `${feed.kARating}kA`,
-          MetersRequired: feed.metersRequired,
-          BusCouplerType: feed.busCouplerType,
-          CableSpecs: feed.cableSpecs,
-        }))}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={computedData.incomerTypes.feeders.map((feed: any) => {
+          return {
+            Equipment: "Feeder",
+            Phase: feed.phase,
+            KARating: `${feed.kARating}kA`,
+            MetersRequired: feed.metersRequired,
+            BusCouplerType: feed.busCouplerType,
+            CableSpecs: feed.cableSpecs,
+          };
+        })}
         columns={[
           { key: "Equipment", label: "Equipment" },
           { key: "Phase", label: "Phase" },
@@ -313,7 +329,8 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Panel Specifications"
-        data={dataTables.panelSpecifications}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data={dataTables.panelSpecifications as Record<string, any>[]}
         columns={[
           { key: "Parameter", label: "Parameter" },
           { key: "Value", label: "Value" },
@@ -364,7 +381,7 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Equipment List"
-        data={equipment.map((eq, index) => ({
+        data={equipment.map((eq) => ({
           ID: eq.id,
           Description: eq.description,
           Rating: `${eq.rating} kW`,

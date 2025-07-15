@@ -2,8 +2,16 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useTransition, useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -16,7 +24,7 @@ import {
   ratingDetailsSchema,
   RatingDetailsFormData,
 } from "@/schema/rating-details";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const CURRENT_RATINGS = [
   "2A",
@@ -56,295 +64,265 @@ export function RatingDetailsForm({
   numberOfIncomers,
   numberOfFeeders,
 }: RatingDetailsFormProps) {
-  // If we have initial data, make the form read-only
-  const isReadOnly = !!initialData;
-
-  // Auto-submit when form is read-only (has initial data)
-  useEffect(() => {
-    if (isReadOnly && initialData) {
-      // Auto-proceed with the initial data
-      onNext(initialData);
-    }
-  }, [isReadOnly, initialData, onNext]);
-
-  const [incomers, setIncomers] = useState(
-    Array.from({ length: numberOfIncomers }, (_, i) => ({
-      currentRating: initialData?.incomers?.[i]?.currentRating || "100A",
-      wiringMaterial: initialData?.incomers?.[i]?.wiringMaterial || "Copper",
-      cablesOrBusBars: initialData?.incomers?.[i]?.cablesOrBusBars || "Cables",
-    }))
-  );
-  const [feeders, setFeeders] = useState(
-    Array.from({ length: numberOfFeeders }, (_, i) => ({
-      currentRating: initialData?.feeders?.[i]?.currentRating || "2A",
-      wiringMaterial: initialData?.feeders?.[i]?.wiringMaterial || "Copper",
-      cablesOrBusBars: initialData?.feeders?.[i]?.cablesOrBusBars || "Cables",
-    }))
-  );
-
-  useEffect(() => {
-    setIncomers(
-      Array.from({ length: numberOfIncomers }, (_, i) => ({
-        currentRating: initialData?.incomers?.[i]?.currentRating || "100A",
-        wiringMaterial: initialData?.incomers?.[i]?.wiringMaterial || "Copper",
-        cablesOrBusBars:
-          initialData?.incomers?.[i]?.cablesOrBusBars || "Cables",
-      }))
-    );
-    setFeeders(
-      Array.from({ length: numberOfFeeders }, (_, i) => ({
-        currentRating: initialData?.feeders?.[i]?.currentRating || "2A",
-        wiringMaterial: initialData?.feeders?.[i]?.wiringMaterial || "Copper",
-        cablesOrBusBars: initialData?.feeders?.[i]?.cablesOrBusBars || "Cables",
-      }))
-    );
-  }, [numberOfIncomers, numberOfFeeders, initialData]);
-
+  const [isPending, startTransition] = useTransition();
+  const [formAction] = useActionState(async (prev, data) => {
+    onNext(data);
+    return data;
+  }, null);
+  const incomers = Array.from({ length: numberOfIncomers }, (_, i) => ({
+    currentRating: initialData?.incomers?.[i]?.currentRating || "100A",
+    wiringMaterial: initialData?.incomers?.[i]?.wiringMaterial || "Copper",
+    cablesOrBusBars: initialData?.incomers?.[i]?.cablesOrBusBars || "Cables",
+  }));
+  const feeders = Array.from({ length: numberOfFeeders }, (_, i) => ({
+    currentRating: initialData?.feeders?.[i]?.currentRating || "2A",
+    wiringMaterial: initialData?.feeders?.[i]?.wiringMaterial || "Copper",
+    cablesOrBusBars: initialData?.feeders?.[i]?.cablesOrBusBars || "Cables",
+  }));
   const form = useForm<RatingDetailsFormData>({
     resolver: zodResolver(ratingDetailsSchema),
     defaultValues: { incomers, feeders },
-    values: { incomers, feeders },
+    mode: "onChange",
   });
 
-  const {
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting, isValid },
-  } = form;
-
   useEffect(() => {
-    setValue("incomers", incomers);
-    setValue("feeders", feeders);
-  }, [incomers, feeders, setValue]);
-
-  const onChangeIncomer = (idx: number, field: string, value: string) => {
-    setIncomers((prev) =>
-      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
-    );
-  };
-  const onChangeFeeder = (idx: number, field: string, value: string) => {
-    setFeeders((prev) =>
-      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
-    );
-  };
-
-  const onSubmit = (data: RatingDetailsFormData) => {
-    onNext(data);
-  };
+    form.reset({ incomers, feeders });
+  }, [numberOfIncomers, numberOfFeeders, initialData, form]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* Incomer Section */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Incomer Ratings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {incomers.map((item, idx) => (
-            <Card key={idx}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center font-semibold rounded-t">
-                  {`Incomer No. ${idx + 1}`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>
-                    Current Rating <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.currentRating}
-                    onValueChange={(val) =>
-                      onChangeIncomer(idx, "currentRating", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENT_RATINGS.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.incomers?.[idx]?.currentRating && (
-                    <p className="text-xs text-destructive">
-                      {errors.incomers[idx]?.currentRating?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Wiring Material <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.wiringMaterial}
-                    onValueChange={(val) =>
-                      onChangeIncomer(idx, "wiringMaterial", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WIRING_MATERIALS.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.incomers?.[idx]?.wiringMaterial && (
-                    <p className="text-xs text-destructive">
-                      {errors.incomers[idx]?.wiringMaterial?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Cables/BusBars <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.cablesOrBusBars}
-                    onValueChange={(val) =>
-                      onChangeIncomer(idx, "cablesOrBusBars", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CABLES_OR_BUSBARS.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.incomers?.[idx]?.cablesOrBusBars && (
-                    <p className="text-xs text-destructive">
-                      {errors.incomers[idx]?.cablesOrBusBars?.message}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) =>
+          startTransition(() => formAction(data))
+        )}
+        className="space-y-8"
+      >
+        {/* Incomer Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Incomer Ratings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {form.watch("incomers").map((item, idx) => (
+              <Card key={idx}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-center font-semibold rounded-t">{`Incomer No. ${
+                    idx + 1
+                  }`}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name={`incomers.${idx}.currentRating`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Current Rating <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select rating" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CURRENT_RATINGS.map((r) => (
+                                <SelectItem key={r} value={r}>
+                                  {r}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`incomers.${idx}.wiringMaterial`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Wiring Material{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select material" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {WIRING_MATERIALS.map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`incomers.${idx}.cablesOrBusBars`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Cables/BusBars <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select option" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CABLES_OR_BUSBARS.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {c}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
-      {/* Feeder Section */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Feeder Ratings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {feeders.map((item, idx) => (
-            <Card key={idx}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-center font-semibold rounded-t">
-                  {`Feeder No. ${idx + 1}`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>
-                    Current Rating <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.currentRating}
-                    onValueChange={(val) =>
-                      onChangeFeeder(idx, "currentRating", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENT_RATINGS.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.feeders?.[idx]?.currentRating && (
-                    <p className="text-xs text-destructive">
-                      {errors.feeders[idx]?.currentRating?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Wiring Material <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.wiringMaterial}
-                    onValueChange={(val) =>
-                      onChangeFeeder(idx, "wiringMaterial", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WIRING_MATERIALS.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.feeders?.[idx]?.wiringMaterial && (
-                    <p className="text-xs text-destructive">
-                      {errors.feeders[idx]?.wiringMaterial?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Cables/BusBars <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={item.cablesOrBusBars}
-                    onValueChange={(val) =>
-                      onChangeFeeder(idx, "cablesOrBusBars", val)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CABLES_OR_BUSBARS.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.feeders?.[idx]?.cablesOrBusBars && (
-                    <p className="text-xs text-destructive">
-                      {errors.feeders[idx]?.cablesOrBusBars?.message}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Feeder Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Feeder Ratings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {form.watch("feeders").map((item, idx) => (
+              <Card key={idx}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-center font-semibold rounded-t">{`Feeder No. ${
+                    idx + 1
+                  }`}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name={`feeders.${idx}.currentRating`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Current Rating <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select rating" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CURRENT_RATINGS.map((r) => (
+                                <SelectItem key={r} value={r}>
+                                  {r}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`feeders.${idx}.wiringMaterial`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Wiring Material{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select material" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {WIRING_MATERIALS.map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`feeders.${idx}.cablesOrBusBars`}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>
+                          Cables/BusBars <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select option" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CABLES_OR_BUSBARS.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {c}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button type="submit" disabled={isSubmitting || isLoading || !isValid}>
-          {isSubmitting || isLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="loader spinner-border spinner-border-sm"></span>{" "}
-              Saving...
-            </span>
-          ) : (
-            "Next"
-          )}
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-between pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isPending || isLoading}>
+            {isPending || isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="loader spinner-border spinner-border-sm"></span>{" "}
+                Saving...
+              </span>
+            ) : (
+              "Next"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
