@@ -72,7 +72,7 @@ const EquipmentWidget = ({
     >
       <h3 className="font-bold text-sm mb-1">{title}</h3>
       {subtitle && <p className="text-xs opacity-75">{subtitle}</p>}
-      <div className="text-xs opacity-75">
+      <div className="hidden text-xs opacity-75">
         {height}x{width}
       </div>
     </div>
