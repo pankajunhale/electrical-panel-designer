@@ -15,34 +15,51 @@ export async function submitRatingDetails(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  console.log(formData);
   // Extract rating data from FormData
-  const incomerRatings = [];
-  const feederRatings = [];
+  let incomers: Array<{
+    currentRating: string;
+    wiringMaterial: string;
+    cablesOrBusBars: string;
+  }> = [];
+  let feeders: Array<{
+    currentRating: string;
+    wiringMaterial: string;
+    cablesOrBusBars: string;
+  }> = [];
 
-  let incomerIndex = 0;
-  while (formData.get(`incomerRatings[${incomerIndex}].rating`)) {
-    const rating = {
-      rating: formData.get(`incomerRatings[${incomerIndex}].rating`) as string,
-      type: formData.get(`incomerRatings[${incomerIndex}].type`) as string,
-    };
-    incomerRatings.push(rating);
-    incomerIndex++;
+  if (formData.get("incomers")) {
+    const tempIncomers = JSON.parse(formData.get("incomers") as string);
+    incomers = tempIncomers.map(
+      (incomer: {
+        currentRating: string;
+        wiringMaterial: string;
+        cablesOrBusBars: string;
+      }) => ({
+        currentRating: incomer.currentRating,
+        wiringMaterial: incomer.wiringMaterial,
+        cablesOrBusBars: incomer.cablesOrBusBars,
+      })
+    );
   }
-
-  let feederIndex = 0;
-  while (formData.get(`feederRatings[${feederIndex}].rating`)) {
-    const rating = {
-      rating: formData.get(`feederRatings[${feederIndex}].rating`) as string,
-      type: formData.get(`feederRatings[${feederIndex}].type`) as string,
-    };
-    feederRatings.push(rating);
-    feederIndex++;
+  if (formData.get("feeders")) {
+    const tempFeeders = JSON.parse(formData.get("feeders") as string);
+    feeders = tempFeeders.map(
+      (feeder: {
+        currentRating: string;
+        wiringMaterial: string;
+        cablesOrBusBars: string;
+      }) => ({
+        currentRating: feeder.currentRating,
+        wiringMaterial: feeder.wiringMaterial,
+        cablesOrBusBars: feeder.cablesOrBusBars,
+      })
+    );
   }
-
-  const data = { incomerRatings, feederRatings };
-
+  const data = { incomers, feeders };
+  console.log(data);
   const validatedFields = ratingDetailsSchema.safeParse(data);
-
+  console.log(validatedFields);
   if (!validatedFields.success) {
     const fieldErrors: Record<string, string[]> = {};
 

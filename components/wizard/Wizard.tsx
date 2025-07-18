@@ -17,11 +17,8 @@ const steps = [
 
 export function Wizard() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleNext = async (stepData: any) => {
-    setWizardData((prev: any) => ({ ...prev, ...stepData }));
+  const handleNext = async () => {
     setCurrentStep((prev: number) => Math.min(prev + 1, steps.length));
   };
 
@@ -29,8 +26,7 @@ export function Wizard() {
     setCurrentStep((prev: number) => Math.max(prev - 1, 1));
   };
 
-  const handleSystemDetailsSubmit = async (data: any) => {
-    setWizardData((prev: any) => ({ ...prev, systemDetails: data }));
+  const handleSystemDetailsSubmit = async () => {
     setCurrentStep((prev: number) => Math.min(prev + 1, steps.length));
   };
 
@@ -82,7 +78,7 @@ export function Wizard() {
           Back
         </Button>
         <Button
-          onClick={() => handleNext({})}
+          onClick={() => handleNext()}
           disabled={currentStep === steps.length + 1}
         >
           Next

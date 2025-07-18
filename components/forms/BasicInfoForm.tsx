@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,11 +11,22 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { type BasicInfoFormData } from "@/schema/basic-info";
+import { basicInfoSchema, type BasicInfoFormData } from "@/schema/basic-info";
 import { submitBasicInfo } from "@/actions/basic-info";
 import { useActionState } from "react";
 import { useEffect } from "react";
 import { Zap, FileText, Wrench } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useTransition } from "react";
 
 const SUPPLY_SYSTEMS = [
   "3 Phase 4 Wire, 50Hz",
@@ -34,9 +44,6 @@ const MCCB_OPTIONS = ["Siemens_3WL", "L&T", "ABB"];
 const ACB_OPTIONS = ["Siemens_3WL", "L&T", "ABB"];
 const MPCB_OPTIONS = ["Siemens_3RV", "L&T", "ABB"];
 const CONTACTOR_OPTIONS = ["Siemens_3RT", "L&T", "ABB"];
-const METER_OPTIONS = ["Conzerv", "Teknik", "EPCOS"];
-const PILOT_DEVICE_OPTIONS = ["Teknik", "Conzerv", "EPCOS"];
-const CAPACITOR_OPTIONS = ["EPCOS", "Conzerv", "Teknik"];
 
 interface BasicInfoFormProps {
   onNext: (data: BasicInfoFormData) => void;
@@ -51,9 +58,38 @@ export function BasicInfoForm({
   initialData,
   isLoading = false,
 }: BasicInfoFormProps) {
+  const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(submitBasicInfo, {
     errors: {},
     message: "",
+  });
+  const form = useForm<BasicInfoFormData>({
+    resolver: zodResolver(basicInfoSchema),
+    defaultValues: initialData ?? {
+      supplyLineVoltage: undefined,
+      supplySystem: SUPPLY_SYSTEMS[0],
+      controlVoltage: undefined,
+      panelType: PANEL_TYPES[0],
+      numberOfIncomers: undefined,
+      numberOfOutgoingFeeders: undefined,
+      title: "",
+      drawingNo: "",
+      author: "",
+      company: "",
+      customer: "",
+      colorFormat: "Colored",
+      ferrulPrefix: "",
+      sfu: SFU_OPTIONS[0],
+      mccb: MCCB_OPTIONS[0],
+      acb: ACB_OPTIONS[0],
+      mpcb: MPCB_OPTIONS[0],
+      contactor: CONTACTOR_OPTIONS[0],
+      meter: "",
+      pilotDevice: "",
+      capacitor: "",
+      saveAsDefault: false,
+    },
+    mode: "onChange",
   });
 
   // Handle successful submission
@@ -64,441 +100,554 @@ export function BasicInfoForm({
   }, [state, onNext]);
 
   return (
-    <form action={formAction} className="space-y-4">
-      {/* System Details */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            System Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="supplyLineVoltage">
-              Supply Line Voltage <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="supplyLineVoltage"
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => {
+            const formData = new FormData();
+            Object.entries(data).forEach(([key, value]) => {
+              formData.append(key, value.toString());
+            });
+            formAction(formData);
+          });
+        })}
+        className="space-y-4"
+      >
+        {/* System Details */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              System Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
               name="supplyLineVoltage"
-              defaultValue={initialData?.supplyLineVoltage || "415"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Supply Line Voltage <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.supplyLineVoltage && (
-              <p className="text-xs text-destructive">
-                {state.errors.supplyLineVoltage[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="supplySystem">
-              Supply System <span className="text-red-500">*</span>
-            </Label>
-            <Select
+            <FormField
+              control={form.control}
               name="supplySystem"
-              defaultValue={initialData?.supplySystem || SUPPLY_SYSTEMS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select system" />
-              </SelectTrigger>
-              <SelectContent>
-                {SUPPLY_SYSTEMS.map((sys) => (
-                  <SelectItem key={sys} value={sys}>
-                    {sys}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.supplySystem && (
-              <p className="text-xs text-destructive">
-                {state.errors.supplySystem[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="controlVoltage">
-              Control Voltage <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="controlVoltage"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Supply System <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select system" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SUPPLY_SYSTEMS.map((sys) => (
+                        <SelectItem key={sys} value={sys}>
+                          {sys}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="controlVoltage"
-              defaultValue={initialData?.controlVoltage || "240"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Control Voltage <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.controlVoltage && (
-              <p className="text-xs text-destructive">
-                {state.errors.controlVoltage[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="panelType">
-              Panel Type <span className="text-red-500">*</span>
-            </Label>
-            <Select
+            <FormField
+              control={form.control}
               name="panelType"
-              defaultValue={initialData?.panelType || PANEL_TYPES[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select panel type" />
-              </SelectTrigger>
-              <SelectContent>
-                {PANEL_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.panelType && (
-              <p className="text-xs text-destructive">
-                {state.errors.panelType[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="numberOfIncomers">
-              Number of Incomers <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="numberOfIncomers"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Panel Type <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select panel type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {PANEL_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="numberOfIncomers"
-              type="number"
-              min={1}
-              defaultValue={initialData?.numberOfIncomers || "2"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Number of Incomers <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.numberOfIncomers && (
-              <p className="text-xs text-destructive">
-                {state.errors.numberOfIncomers[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="numberOfOutgoingFeeders">
-              Number of Outgoing Feeders <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="numberOfOutgoingFeeders"
+            <FormField
+              control={form.control}
               name="numberOfOutgoingFeeders"
-              type="number"
-              min={1}
-              defaultValue={initialData?.numberOfOutgoingFeeders || "8"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Number of Outgoing Feeders{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.numberOfOutgoingFeeders && (
-              <p className="text-xs text-destructive">
-                {state.errors.numberOfOutgoingFeeders[0]}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Drawing Details */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Drawing Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="title">
-              Drawing Title <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="title"
+        {/* Drawing Details */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Drawing Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
               name="title"
-              defaultValue={initialData?.title || "Panel No. 1"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Drawing Title <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.title && (
-              <p className="text-xs text-destructive">
-                {state.errors.title[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="drawingNo">
-              Drawing Number <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="drawingNo"
+            <FormField
+              control={form.control}
               name="drawingNo"
-              defaultValue={initialData?.drawingNo || "DWG/2013/01/REV 1"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Drawing Number <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.drawingNo && (
-              <p className="text-xs text-destructive">
-                {state.errors.drawingNo[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="author">
-              Author <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="author"
+            <FormField
+              control={form.control}
               name="author"
-              defaultValue={initialData?.author || "Author Name"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Author <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.author && (
-              <p className="text-xs text-destructive">
-                {state.errors.author[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="company">
-              Company <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="company"
+            <FormField
+              control={form.control}
               name="company"
-              defaultValue={initialData?.company || "Your Company Name"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Company <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.company && (
-              <p className="text-xs text-destructive">
-                {state.errors.company[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="customer">
-              Customer <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="customer"
+            <FormField
+              control={form.control}
               name="customer"
-              defaultValue={initialData?.customer || "Your Customer Name"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Customer <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.customer && (
-              <p className="text-xs text-destructive">
-                {state.errors.customer[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="colorFormat">
-              Color Format <span className="text-red-500">*</span>
-            </Label>
-            <Select
+            <FormField
+              control={form.control}
               name="colorFormat"
-              defaultValue={initialData?.colorFormat || "Colored"}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select color format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Colored">Colored</SelectItem>
-                <SelectItem value="Monochrome">Monochrome</SelectItem>
-              </SelectContent>
-            </Select>
-            {state.errors?.colorFormat && (
-              <p className="text-xs text-destructive">
-                {state.errors.colorFormat[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="ferrulPrefix">
-              Ferrul Prefix <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="ferrulPrefix"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Color Format <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select color format" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Colored">Colored</SelectItem>
+                      <SelectItem value="Monochrome">Monochrome</SelectItem>
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="ferrulPrefix"
-              defaultValue={initialData?.ferrulPrefix || "1"}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>
+                    Ferrul Prefix <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.ferrulPrefix && (
-              <p className="text-xs text-destructive">
-                {state.errors.ferrulPrefix[0]}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Make Details */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
-            Make Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="sfu">SFUs</Label>
-            <Select
+        {/* Make Details */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              Make Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
               name="sfu"
-              defaultValue={initialData?.sfu || SFU_OPTIONS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select SFU" />
-              </SelectTrigger>
-              <SelectContent>
-                {SFU_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.sfu && (
-              <p className="text-xs text-destructive">{state.errors.sfu[0]}</p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="mccb">MCCBs</Label>
-            <Select
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>SFUs</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select SFU" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SFU_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="mccb"
-              defaultValue={initialData?.mccb || MCCB_OPTIONS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select MCCB" />
-              </SelectTrigger>
-              <SelectContent>
-                {MCCB_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.mccb && (
-              <p className="text-xs text-destructive">{state.errors.mccb[0]}</p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="acb">ACBs</Label>
-            <Select
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>MCCBs</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select MCCB" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {MCCB_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="acb"
-              defaultValue={initialData?.acb || ACB_OPTIONS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select ACB" />
-              </SelectTrigger>
-              <SelectContent>
-                {ACB_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.acb && (
-              <p className="text-xs text-destructive">{state.errors.acb[0]}</p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="mpcb">MPCBs</Label>
-            <Select
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>ACBs</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select ACB" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ACB_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="mpcb"
-              defaultValue={initialData?.mpcb || MPCB_OPTIONS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select MPCB" />
-              </SelectTrigger>
-              <SelectContent>
-                {MPCB_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.mpcb && (
-              <p className="text-xs text-destructive">{state.errors.mpcb[0]}</p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="contactor">Contactors</Label>
-            <Select
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>MPCBs</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select MPCB" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {MPCB_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="contactor"
-              defaultValue={initialData?.contactor || CONTACTOR_OPTIONS[0]}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Contactor" />
-              </SelectTrigger>
-              <SelectContent>
-                {CONTACTOR_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.errors?.contactor && (
-              <p className="text-xs text-destructive">
-                {state.errors.contactor[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="meter">Meters</Label>
-            <Input
-              id="meter"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Contactors</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Contactor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CONTACTOR_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                    <FormMessage />
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="meter"
-              defaultValue={initialData?.meter || METER_OPTIONS[0]}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Meters</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.meter && (
-              <p className="text-xs text-destructive">
-                {state.errors.meter[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="pilotDevice">Pilot Devices</Label>
-            <Input
-              id="pilotDevice"
+            <FormField
+              control={form.control}
               name="pilotDevice"
-              defaultValue={initialData?.pilotDevice || PILOT_DEVICE_OPTIONS[0]}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Pilot Devices</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.pilotDevice && (
-              <p className="text-xs text-destructive">
-                {state.errors.pilotDevice[0]}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="capacitor">Capacitors</Label>
-            <Input
-              id="capacitor"
+            <FormField
+              control={form.control}
               name="capacitor"
-              defaultValue={initialData?.capacitor || CAPACITOR_OPTIONS[0]}
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel>Capacitors</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {state.errors?.capacitor && (
-              <p className="text-xs text-destructive">
-                {state.errors.capacitor[0]}
-              </p>
+          </CardContent>
+        </Card>
+
+        {/* Save as Default Checkbox */}
+        <div className="flex items-center space-x-2">
+          <FormField
+            control={form.control}
+            name="saveAsDefault"
+            render={({ field }) => (
+              <FormItem className="flex items-center space-x-2">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel htmlFor="saveAsDefault" className="font-medium">
+                  Save Settings as Default
+                </FormLabel>
+              </FormItem>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          />
+        </div>
 
-      {/* Save as Default Checkbox */}
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="saveAsDefault"
-          name="saveAsDefault"
-          defaultChecked={initialData?.saveAsDefault || false}
-        />
-        <Label htmlFor="saveAsDefault" className="font-medium">
-          Save Settings as Default
-        </Label>
-      </div>
+        {/* Success/Error Messages */}
+        {state.message && (
+          <p className="text-green-600 text-sm">{state.message}</p>
+        )}
 
-      {/* Success/Error Messages */}
-      {state.message && (
-        <p className="text-green-600 text-sm">{state.message}</p>
-      )}
-
-      {/* Form Actions */}
-      <div className="flex justify-between">
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Next"}
-        </Button>
-      </div>
-    </form>
+        {/* Form Actions */}
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isPending || isLoading}>
+            {isPending || isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="loader spinner-border spinner-border-sm"></span>{" "}
+                Saving...
+              </span>
+            ) : (
+              "Next"
+            )}
+          </Button>
+        </div>
+        <pre className="mt-4 bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+          {JSON.stringify(form.getValues(), null, 2)}
+        </pre>
+      </form>
+    </Form>
   );
 }

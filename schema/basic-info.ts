@@ -2,14 +2,12 @@ import { z } from "zod";
 
 export const basicInfoSchema = z.object({
   // System Details
-  supplyLineVoltage: z.string().min(1, "Supply Line Voltage is required"),
+  supplyLineVoltage: z.number(),
   supplySystem: z.string().min(1, "Supply System is required"),
-  controlVoltage: z.string().min(1, "Control Voltage is required"),
+  controlVoltage: z.number(),
   panelType: z.string().min(1, "Panel Type is required"),
-  numberOfIncomers: z.string().min(1, "Number of Incomers is required"),
-  numberOfOutgoingFeeders: z
-    .string()
-    .min(1, "Number of Outgoing Feeders is required"),
+  numberOfIncomers: z.number(),
+  numberOfOutgoingFeeders: z.number(),
   saveAsDefault: z.boolean().optional(),
 
   // Drawing Details

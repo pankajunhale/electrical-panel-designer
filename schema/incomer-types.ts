@@ -5,7 +5,7 @@ export const incomerTypesSchema = z.object({
     z.object({
       incomerType: z.string().min(1, "Required"),
       phase: z.string().min(1, "Required"),
-      incomerKA: z.string().min(1, "Required"),
+      incomerKA: z.number(),
       metersRequired: z.object({
         amp: z.boolean(),
         volt: z.boolean(),
@@ -13,8 +13,8 @@ export const incomerTypesSchema = z.object({
         lm: z.boolean(),
       }),
       busCouplerType: z.string().min(1, "Required"),
-      alBusBars: z.string().min(1, "Required"),
-      cuCables: z.string().min(1, "Required"),
+      alBusBars: z.number(),
+      cuCables: z.number(),
     })
   ),
 });

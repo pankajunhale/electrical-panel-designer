@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,10 +10,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type DrawingDetailsFormData } from "@/schema/drawing-details";
+import {
+  drawingDetailsSchema,
+  type DrawingDetailsFormData,
+} from "@/schema/drawing-details";
 import { submitDrawingDetails } from "@/actions/drawing-details";
 import { useActionState } from "react";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useTransition } from "react";
 
 interface DrawingDetailsFormProps {
   onNext: (data: DrawingDetailsFormData) => void;
@@ -27,9 +40,24 @@ export function DrawingDetailsForm({
   onBack,
   initialData,
 }: DrawingDetailsFormProps) {
+  const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(submitDrawingDetails, {
     errors: {},
     message: "",
+  });
+  const form = useForm<DrawingDetailsFormData>({
+    resolver: zodResolver(drawingDetailsSchema),
+    defaultValues: initialData ?? {
+      title: "Panel No. 1",
+      drawingNo: "DWG/2013/01/REV 1",
+      author: "Author Name",
+      company: "Your Company Name",
+      customer: "Your Customer Name",
+      colorFormat: "Colored",
+      ferrulPrefix: "1",
+      // ...other fields as needed
+    },
+    mode: "onChange",
   });
 
   // Handle successful submission
@@ -40,127 +68,146 @@ export function DrawingDetailsForm({
   }, [state, onNext]);
 
   return (
-    <form action={formAction} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Drawing Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 rounded-b-xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => formAction(data as unknown as FormData));
+        })}
+        className="space-y-6"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Drawing Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 rounded-b-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="title"
-                defaultValue={initialData?.title || "Panel No. 1"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {state.errors?.title && (
-                <p className="text-sm text-destructive">
-                  {state.errors.title[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="drawingNo">Drawing No.</Label>
-              <Input
-                id="drawingNo"
+              <FormField
+                control={form.control}
                 name="drawingNo"
-                defaultValue={initialData?.drawingNo || "DWG/2013/01/REV 1"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Drawing No.</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {state.errors?.drawingNo && (
-                <p className="text-sm text-destructive">
-                  {state.errors.drawingNo[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="author">Author</Label>
-              <Input
-                id="author"
+              <FormField
+                control={form.control}
                 name="author"
-                defaultValue={initialData?.author || "Author Name"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Author</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {state.errors?.author && (
-                <p className="text-sm text-destructive">
-                  {state.errors.author[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
+              <FormField
+                control={form.control}
                 name="company"
-                defaultValue={initialData?.company || "Your Company Name"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {state.errors?.company && (
-                <p className="text-sm text-destructive">
-                  {state.errors.company[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customer">Customer</Label>
-              <Input
-                id="customer"
+              <FormField
+                control={form.control}
                 name="customer"
-                defaultValue={initialData?.customer || "Your Customer Name"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Customer</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {state.errors?.customer && (
-                <p className="text-sm text-destructive">
-                  {state.errors.customer[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="colorFormat">Color Format</Label>
-              <Select
+              <FormField
+                control={form.control}
                 name="colorFormat"
-                defaultValue={initialData?.colorFormat || "Colored"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select color format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Colored">Colored</SelectItem>
-                  <SelectItem value="Monochrome">Monochrome</SelectItem>
-                </SelectContent>
-              </Select>
-              {state.errors?.colorFormat && (
-                <p className="text-sm text-destructive">
-                  {state.errors.colorFormat[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ferrulPrefix">Ferrul Prefix (0-9, A-Z)</Label>
-              <Input
-                id="ferrulPrefix"
-                name="ferrulPrefix"
-                maxLength={1}
-                defaultValue={initialData?.ferrulPrefix || "1"}
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Color Format</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select color format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Colored">Colored</SelectItem>
+                          <SelectItem value="Monochrome">Monochrome</SelectItem>
+                        </SelectContent>
+                      </FormControl>
+                      <FormMessage />
+                    </Select>
+                  </FormItem>
+                )}
               />
-              {state.errors?.ferrulPrefix && (
-                <p className="text-sm text-destructive">
-                  {state.errors.ferrulPrefix[0]}
-                </p>
-              )}
+              <FormField
+                control={form.control}
+                name="ferrulPrefix"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Ferrul Prefix (0-9, A-Z)</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Success/Error Messages */}
-      {state.message && (
-        <p className="text-green-600 text-sm">{state.message}</p>
-      )}
+        {/* Success/Error Messages */}
+        {state.message && (
+          <p className="text-green-600 text-sm">{state.message}</p>
+        )}
 
-      <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button type="submit">Next</Button>
-      </div>
-    </form>
+        <div className="flex justify-between pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <span className="flex items-center gap-2">
+                <span className="loader spinner-border spinner-border-sm"></span>{" "}
+                Saving...
+              </span>
+            ) : (
+              "Next"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
