@@ -9,9 +9,9 @@ import {
 } from "@/actions/wizard-computation";
 
 interface GridstackFormProps {
-  onNext: (data: { gridLayout: any }) => void;
+  onNext: (data: { gridLayout: GridWidget[] }) => void;
   onBack: () => void;
-  initialData?: { gridLayout: any };
+  initialData?: { gridLayout: GridWidget[] };
   isLoading?: boolean;
 }
 import { GridStack } from "gridstack";
@@ -341,7 +341,7 @@ export function GridstackForm({
           </div>
 
           {/* Equipment Components Panel */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-gray-50 p-4 rounded-lg hidden">
             <h3 className="text-md font-medium mb-3">Available Components</h3>
             <div className="space-y-4">
               {Object.entries(groupedComponents).map(([type, components]) => (

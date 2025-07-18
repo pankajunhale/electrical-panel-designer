@@ -2,17 +2,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ReactNode } from "react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface DataTableColumn {
+  key: string;
+  label: string;
+  type?: "text" | "number" | "badge" | "currency";
+  color?: string;
+}
+
 interface DataTableProps {
   title: string;
-  data: Array<Record<string, any>>;
-  columns: Array<{
-    key: string;
-    label: string;
-    type?: "text" | "number" | "badge" | "currency";
-    color?: string;
-  }>;
+  data: Array<Record<string, unknown>>;
+  columns: DataTableColumn[];
   className?: string;
 }
 
@@ -22,14 +24,16 @@ export function DataTable({
   columns,
   className = "",
 }: DataTableProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getCellValue = (item: Record<string, any>, column: any) => {
+  const getCellValue = (
+    item: Record<string, unknown>,
+    column: DataTableColumn
+  ): ReactNode => {
     const value = item[column.key];
 
     if (column.type === "badge") {
       return (
         <Badge variant="secondary" className={column.color}>
-          {value}
+          {String(value)}
         </Badge>
       );
     }
@@ -42,7 +46,7 @@ export function DataTable({
       return typeof value === "number" ? `$${value.toLocaleString()}` : value;
     }
 
-    return value;
+    return value as ReactNode;
   };
 
   return (
@@ -75,7 +79,7 @@ export function DataTable({
                     rowIndex % 2 === 0 ? "bg-white" : "bg-gray-25"
                   }`}
                 >
-                  {columns.map((column, colIndex) => (
+                  {columns.map((column) => (
                     <td
                       key={column.key}
                       className={`px-4 py-3 text-sm ${

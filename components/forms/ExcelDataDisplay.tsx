@@ -228,9 +228,11 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Incomer Ratings"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data={computedData.ratingDetails.incomers.map(
-          (inc: any, index: number) => ({
+          (
+            inc: (typeof computedData.ratingDetails.incomers)[number],
+            index: number
+          ) => ({
             Incomer:
               computedData.incomerDetails.incomers[index]?.name ||
               `Incomer ${index + 1}`,
@@ -249,9 +251,11 @@ export function ExcelDataDisplay({
 
       <DataTable
         title="Feeder Ratings"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data={computedData.ratingDetails.feeders.map(
-          (feed: any, index: number) => ({
+          (
+            feed: (typeof computedData.ratingDetails.feeders)[number],
+            index: number
+          ) => ({
             Equipment:
               computedData.incomerDetails.feeders[index]?.name ||
               `Feeder ${index + 1}`,
@@ -274,9 +278,11 @@ export function ExcelDataDisplay({
     <div className="space-y-6">
       <DataTable
         title="Incomer Types"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data={computedData.incomerTypes.incomers.map(
-          (inc: any, idx: number) => {
+          (
+            inc: (typeof computedData.incomerTypes.incomers)[number],
+            idx: number
+          ) => {
             const name =
               computedData.incomerDetails.incomers[idx]?.name ||
               `Incomer ${idx + 1}`;
