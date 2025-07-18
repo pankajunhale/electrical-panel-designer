@@ -39,14 +39,16 @@ export function DataTable({
     }
 
     if (column.type === "number") {
-      return typeof value === "number" ? value.toLocaleString() : value;
+      return typeof value === "number" ? value.toLocaleString() : String(value);
     }
 
     if (column.type === "currency") {
-      return typeof value === "number" ? `$${value.toLocaleString()}` : value;
+      return typeof value === "number"
+        ? `$${value.toLocaleString()}`
+        : String(value);
     }
 
-    return value as ReactNode;
+    return String(value);
   };
 
   return (
