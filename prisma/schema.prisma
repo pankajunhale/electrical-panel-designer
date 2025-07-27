@@ -15,48 +15,117 @@ datasource db {
 // ==============================
 
 model Role {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String   @unique @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   users User[]
+  createdByUser User? @relation("RoleCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("RoleUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("roles")
 }
 
 model Team {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String   @db.NVarChar(100)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
-  users User[]
+  users UserTeam[] @relation("UserTeams")
+  clients Client[]
+  projects Project[]
+  panelLocations PanelLocation[]
+  createdByUser User? @relation("TeamCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("TeamUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name])
+  @@index([name])
+  @@index([createdAt])
   @@map("teams")
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   name         String   @db.NVarChar(100)
   email        String   @unique @db.NVarChar(100)
   passwordHash String   @map("password_hash")
-  roleId       Int? @map("role_id")
-  teamId       Int? @map("team_id")
+  roleId       String
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
+  createdBy    String? @map("created_by")
+  updatedBy    String? @map("updated_by")
+  version      Int @default(1)
 
   // Relations
-  role  Role? @relation(fields: [roleId], references: [id])
-  team  Team? @relation(fields: [teamId], references: [id])
+  role  Role @relation(fields: [roleId], references: [id])
+  userTeams UserTeam[] @relation("UserTeams")
   projects Project[]
+  clients Client[]
+  createdByUser User? @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  // Audit trail relations
+  createdUsers User[] @relation("UserCreatedBy")
+  updatedUsers User[] @relation("UserUpdatedBy")
+  createdRoles Role[] @relation("RoleCreatedBy")
+  updatedRoles Role[] @relation("RoleUpdatedBy")
+  createdTeams Team[] @relation("TeamCreatedBy")
+  updatedTeams Team[] @relation("TeamUpdatedBy")
+  createdClients Client[] @relation("ClientCreatedBy")
+  updatedClients Client[] @relation("ClientUpdatedBy")
+  createdProjects Project[] @relation("ProjectCreatedBy")
+  updatedProjects Project[] @relation("ProjectUpdatedBy")
+  createdPanelLocations PanelLocation[] @relation("PanelLocationCreatedBy")
+  updatedPanelLocations PanelLocation[] @relation("PanelLocationUpdatedBy")
+  createdPanels Panel[] @relation("PanelCreatedBy")
+  updatedPanels Panel[] @relation("PanelUpdatedBy")
+  createdFeeders Feeder[] @relation("FeederCreatedBy")
+  updatedFeeders Feeder[] @relation("FeederUpdatedBy")
+  createdFeederLayouts FeederLayout[] @relation("FeederLayoutCreatedBy")
+  updatedFeederLayouts FeederLayout[] @relation("FeederLayoutUpdatedBy")
+  createdSLConfigs SLConfig[] @relation("SLConfigCreatedBy")
+  updatedSLConfigs SLConfig[] @relation("SLConfigUpdatedBy")
+  createdEquipmentData EquipmentData[] @relation("EquipmentDataCreatedBy")
+  updatedEquipmentData EquipmentData[] @relation("EquipmentDataUpdatedBy")
 
+  @@index([email])
+  @@index([roleId])
+  @@index([createdAt])
+  @@index([name])
   @@map("users")
+}
+
+model UserTeam {
+  id      String  @id @default(uuid())
+  userId  String
+  teamId  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
+
+  user    User    @relation("UserTeams", fields: [userId], references: [id])
+  team    Team    @relation("UserTeams", fields: [teamId], references: [id], onDelete: NoAction)
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+  @@index([createdAt])
 }
 
 // ==============================
@@ -64,18 +133,31 @@ model User {
 // ==============================
 
 model Client {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   name         String   @db.NVarChar(100)
   address      String?
   contactEmail String? @map("contact_email") @db.NVarChar(100)
   contactNumber String? @map("contact_number") @db.NVarChar(20)
+  userId       String? @map("user_id")
+  teamId       String? @map("team_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
+  createdBy    String? @map("created_by")
+  updatedBy    String? @map("updated_by")
+  version      Int @default(1)
 
   // Relations
+  user     User? @relation(fields: [userId], references: [id])
+  team     Team? @relation(fields: [teamId], references: [id])
   projects Project[]
+  createdByUser User? @relation("ClientCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("ClientUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([teamId, createdAt])
+  @@index([userId])
+  @@index([name])
+  @@index([contactEmail])
   @@map("clients")
 }
 
@@ -83,36 +165,54 @@ model Project {
   id        String   @id @default(uuid())
   name      String   @db.NVarChar(100)
   description String? @db.NVarChar(1000)
-  clientId  Int? @map("client_id")
-  userId    Int? @map("user_id")
+  clientId  String? @map("client_id")
+  userId    String? @map("user_id")
+  teamId    String? @map("team_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   client Client? @relation(fields: [clientId], references: [id])
-  user   User? @relation(fields: [userId], references: [id])
+  user   User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  team   Team? @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   panels Panel[]
+  createdByUser User? @relation("ProjectCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([teamId, createdAt])
+  @@index([userId])
+  @@index([clientId])
+  @@index([name])
   @@map("projects")
 }
 
 model PanelLocation {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   name        String? @db.NVarChar(100)
   description String?
+  teamId      String? @map("team_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime? @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
+  createdBy   String? @map("created_by")
+  updatedBy   String? @map("updated_by")
+  version     Int @default(1)
 
   // Relations
+  team   Team? @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   panels Panel[]
+  createdByUser User? @relation("PanelLocationCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("PanelLocationUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("panel_locations")
 }
 
 model Panel {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   projectId    String @map("project_id")
   name         String @db.NVarChar(100)
   description  String?
@@ -120,13 +220,16 @@ model Panel {
   width        Int?
   height       Int?
   depth        Int?
-  locationId   Int? @map("location_id")
+  locationId   String? @map("location_id")
   frontViewUrl String? @map("front_view_url")
   rearViewUrl  String? @map("rear_view_url")
   status       String @default("draft") @db.NVarChar(20)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
+  createdBy    String? @map("created_by")
+  updatedBy    String? @map("updated_by")
+  version      Int @default(1)
 
   // Relations
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -134,77 +237,102 @@ model Panel {
   feeders  Feeder[]
   slConfigs SLConfig[]
   equipmentData EquipmentData[]
+  createdByUser User? @relation("PanelCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("PanelUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([projectId, status])
+  @@index([status])
+  @@index([name])
+  @@index([createdAt])
   @@map("panels")
 }
 
 model StarterType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   feeders Feeder[]
   equipmentData EquipmentData[]
 
+  @@unique([name])
   @@map("starter_types")
 }
 
 model SourceType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   feeders Feeder[]
 
+  @@unique([name])
   @@map("source_types")
 }
 
 model BreakerType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   feeders Feeder[]
 
+  @@unique([name])
   @@map("breaker_types")
 }
 
 model FeederType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   feeders Feeder[]
 
+  @@unique([name])
   @@map("feeder_types")
 }
 
 model Feeder {
-  id            Int      @id @default(autoincrement())
-  panelId       Int @map("panel_id")
+  id            String   @id @default(uuid())
+  panelId       String @map("panel_id")
   description   String?
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
-  starterTypeId Int? @map("starter_type_id")
-  feederTypeId  Int? @map("feeder_type_id")
-  sourceTypeId  Int? @map("source_type_id")
-  breakerTypeId Int? @map("breaker_type_id")
+  starterTypeId String? @map("starter_type_id")
+  feederTypeId  String? @map("feeder_type_id")
+  sourceTypeId  String? @map("source_type_id")
+  breakerTypeId String? @map("breaker_type_id")
   quantity      Int?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
+  createdBy     String? @map("created_by")
+  updatedBy     String? @map("updated_by")
+  version       Int @default(1)
 
   // Relations
   panel        Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
@@ -213,13 +341,19 @@ model Feeder {
   sourceType   SourceType? @relation(fields: [sourceTypeId], references: [id])
   breakerType  BreakerType? @relation(fields: [breakerTypeId], references: [id])
   feederLayouts FeederLayout[]
+  createdByUser User? @relation("FeederCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("FeederUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([panelId])
+  @@index([starterTypeId])
+  @@index([feederTypeId])
+  @@index([createdAt])
   @@map("feeders")
 }
 
 model FeederLayout {
-  id        Int      @id @default(autoincrement())
-  feederId  Int @map("feeder_id")
+  id        String   @id @default(uuid())
+  feederId  String @map("feeder_id")
   x         Int?
   y         Int?
   width     Int?
@@ -228,24 +362,34 @@ model FeederLayout {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  version   Int @default(1)
 
   // Relations
   feeder Feeder @relation(fields: [feederId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("FeederLayoutCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("FeederLayoutUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("feeder_layouts")
 }
 
 model SLConfig {
-  id         Int      @id @default(autoincrement())
-  panelId    Int @map("panel_id")
+  id         String   @id @default(uuid())
+  panelId    String @map("panel_id")
   configJson String? @map("config_json") @db.NVarChar(4000)
   generatedAt DateTime @default(now()) @map("generated_at")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime? @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
+  createdBy  String? @map("created_by")
+  updatedBy  String? @map("updated_by")
+  version    Int @default(1)
 
   // Relations
   panel Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("SLConfigCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("SLConfigUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("sl_config")
 }
@@ -255,12 +399,15 @@ model SLConfig {
 // ==============================
 
 model EquipmentType {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   name        String   @unique @db.NVarChar(100)
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime? @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
+  createdBy   String? @map("created_by")
+  updatedBy   String? @map("updated_by")
+  version     Int @default(1)
 
   // Relations
   equipmentData EquipmentData[]
@@ -269,25 +416,33 @@ model EquipmentType {
 }
 
 model EquipmentData {
-  id            Int      @id @default(autoincrement())
-  panelId       Int @map("panel_id")
+  id            String   @id @default(uuid())
+  panelId       String @map("panel_id")
   serialNumber  Int @map("serial_number")
   description   String
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
-  starterTypeId Int? @map("starter_type_id")
+  starterTypeId String? @map("starter_type_id")
   quantity      Int @default(1)
   totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)
-  equipmentTypeId Int? @map("equipment_type_id")
+  equipmentTypeId String? @map("equipment_type_id")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
+  createdBy     String? @map("created_by")
+  updatedBy     String? @map("updated_by")
+  version       Int @default(1)
 
   // Relations
   panel         Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
   starterType   StarterType? @relation(fields: [starterTypeId], references: [id])
   equipmentType EquipmentType? @relation(fields: [equipmentTypeId], references: [id])
+  createdByUser User? @relation("EquipmentDataCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("EquipmentDataUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([panelId, serialNumber])
+  @@index([panelId])
+  @@index([equipmentTypeId])
+  @@index([serialNumber])
   @@map("equipment_data")
 } 
