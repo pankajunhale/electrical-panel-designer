@@ -4,9 +4,12 @@ import { prisma } from "./prisma";
 export interface Project {
   id?: string;
   name: string;
-  description?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  description?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+  clientId?: number | null;
+  userId?: number | null;
 }
 
 // Example interface for equipment data
@@ -68,45 +71,5 @@ export class DatabaseService {
       where: { id },
     });
     return true;
-  }
-
-  // Equipment operations
-  static async getEquipmentByPanelId(
-    panelId: number
-  ): Promise<EquipmentData[]> {
-    return prisma.equipmentData.findMany({
-      where: { panelId },
-    });
-  }
-
-  static async createEquipment(equipment: EquipmentData): Promise<number> {
-    const result = await prisma.equipmentData.create({
-      data: {
-        panelId: equipment.panelId,
-        serialNumber: equipment.serialNumber,
-        description: equipment.description,
-        ratingKw: equipment.ratingKw,
-        ratingHp: equipment.ratingHp,
-        starterTypeId: equipment.starterTypeId,
-        quantity: equipment.quantity || 1,
-        totalLoadKw: equipment.totalLoadKw,
-        equipmentTypeId: equipment.equipmentTypeId,
-      },
-    });
-    return result.id;
-  }
-
-  // Example using Prisma relations instead of stored procedure
-  static async getProjectWithEquipment(projectId: string): Promise<unknown> {
-    return prisma.project.findUnique({
-      where: { id: projectId },
-      include: {
-        panels: {
-          include: {
-            equipmentData: true,
-          },
-        },
-      },
-    });
   }
 }

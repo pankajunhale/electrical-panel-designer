@@ -82,6 +82,7 @@ model Client {
 model Project {
   id        String   @id @default(uuid())
   name      String   @db.NVarChar(100)
+  description String? @db.NVarChar(1000)
   clientId  Int? @map("client_id")
   userId    Int? @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
