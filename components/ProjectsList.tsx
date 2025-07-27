@@ -1,10 +1,10 @@
 "use client";
 
+import { ProjectDto } from "@/dto/project.dto";
 import { useState, useEffect } from "react";
-import { Project } from "@/lib/database-service";
 
 export function ProjectsList() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,39 +15,11 @@ export function ProjectsList() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/projects");
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      const data = await response.json();
-      setProjects(data);
+      setProjects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const createProject = async (
-    projectData: Omit<Project, "id" | "created_at" | "updated_at">
-  ) => {
-    try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(projectData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create project");
-      }
-
-      // Refresh the projects list
-      await fetchProjects();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create project");
     }
   };
 
@@ -69,11 +41,6 @@ export function ProjectsList() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            createProject({
-              name: formData.get("name") as string,
-              description: formData.get("description") as string,
-            });
             e.currentTarget.reset();
           }}
         >
