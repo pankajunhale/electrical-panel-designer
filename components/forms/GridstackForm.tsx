@@ -7,6 +7,7 @@ import {
   WizardFormData,
   type GALayoutItem,
 } from "@/actions/wizard-computation";
+import SLDModal from "@/components/SLDModal";
 
 interface GridstackFormProps {
   onNext: (data: { gridLayout: GridWidget[] }) => void;
@@ -145,6 +146,8 @@ export function GridstackForm({
   const [gridWidgets, setGridWidgets] = useState<GridWidget[]>([]);
   const gridRefNew = useRef<HTMLDivElement>(null);
   const gridInstanceRef = useRef<GridStack | null>(null);
+  const [sldOpen, setSldOpen] = useState(false);
+  const [widgetPositions, setWidgetPositions] = useState<unknown[]>([]);
   useEffect(() => {
     if (!gridRefNew.current || isLoadingData) {
       console.log("🎨 Grid not ready", isLoadingData);
@@ -302,10 +305,24 @@ export function GridstackForm({
       type: widget.type,
       label: widget.label,
     }));
-
+    console.log("🎨 Layout:", layout);
     onNext({
       gridLayout: layout,
     });
+  };
+
+  const getAllWidgetPositions = () => {
+    const grid = gridInstanceRef.current;
+    if (!grid) return [];
+    return grid.save();
+  };
+  const handleShowPositions = () => {
+    const positions = getAllWidgetPositions();
+    if (Array.isArray(positions)) {
+      setWidgetPositions(positions);
+    } else {
+      setWidgetPositions([]);
+    }
   };
 
   return (
@@ -409,15 +426,25 @@ export function GridstackForm({
               }}
             >
               {/* Render React components for each widget */}
-              {gridWidgets.map((widget) => (
+              {equipmentComponents.map((widget, index) => (
                 <GridItem
-                  key={widget.id}
-                  widget={widget}
+                  key={index}
+                  widget={widget as GridWidget}
                   onRemove={removeComponent}
                 />
               ))}
             </div>
-            <div ref={gridRefNew} className="grid-stack border-2 border-dashed">
+            <div
+              ref={gridRefNew}
+              className="grid-stack border-2 border-dashed"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
+                `,
+                backgroundSize: "8.33% 60px",
+              }}
+            >
               {/* Grid items will be added here */}
               {equipmentComponents.map((widget, index) => (
                 <div
@@ -441,17 +468,41 @@ export function GridstackForm({
               💡 Drag components from above to the grid, then resize and
               position them as needed. Click the × to remove components.
             </div>
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleShowPositions}
+              >
+                Show Widget Positions
+              </Button>
+              <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mt-2">
+                {JSON.stringify(widgetPositions, null, 2)}
+              </pre>
+            </div>
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-2">
             <Button type="button" variant="outline" onClick={onBack}>
               Back
             </Button>
             <Button type="button" onClick={handleSubmit} disabled={isLoading}>
               {isLoading ? "Saving..." : "Next"}
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setSldOpen(true)}
+            >
+              View SLD
+            </Button>
           </div>
+          <SLDModal
+            open={sldOpen}
+            onOpenChange={setSldOpen}
+            wizardData={equipmentComponents}
+          />
         </div>
       )}
     </div>

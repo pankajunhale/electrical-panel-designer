@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================
+// AUTHENTICATION MODELS
+// ==============================
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.NVarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  users User[]
+
+  @@map("roles")
+}
+
+model Team {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.NVarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  users User[]
+
+  @@map("teams")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.NVarChar(100)
+  email        String   @unique @db.NVarChar(100)
+  passwordHash String   @map("password_hash")
+  roleId       Int? @map("role_id")
+  teamId       Int? @map("team_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  role  Role? @relation(fields: [roleId], references: [id])
+  team  Team? @relation(fields: [teamId], references: [id])
+  projects Project[]
+
+  @@map("users")
+}
+
+// ==============================
+// PANEL DESIGN MODELS
+// ==============================
+
+model Client {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.NVarChar(100)
+  address      String?
+  contactEmail String? @map("contact_email") @db.NVarChar(100)
+  contactNumber String? @map("contact_number") @db.NVarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  projects Project[]
+
+  @@map("clients")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String   @db.NVarChar(100)
+  clientId  Int? @map("client_id")
+  userId    Int? @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  client Client? @relation(fields: [clientId], references: [id])
+  user   User? @relation(fields: [userId], references: [id])
+  panels Panel[]
+
+  @@map("projects")
+}
+
+model PanelLocation {
+  id          Int      @id @default(autoincrement())
+  name        String? @db.NVarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime? @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  panels Panel[]
+
+  @@map("panel_locations")
+}
+
+model Panel {
+  id           Int      @id @default(autoincrement())
+  projectId    String @map("project_id")
+  name         String @db.NVarChar(100)
+  description  String?
+  voltageLevel String? @map("voltage_level") @db.NVarChar(50)
+  width        Int?
+  height       Int?
+  depth        Int?
+  locationId   Int? @map("location_id")
+  frontViewUrl String? @map("front_view_url")
+  rearViewUrl  String? @map("rear_view_url")
+  status       String @default("draft") @db.NVarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  location PanelLocation? @relation(fields: [locationId], references: [id])
+  feeders  Feeder[]
+  slConfigs SLConfig[]
+  equipmentData EquipmentData[]
+
+  @@map("panels")
+}
+
+model StarterType {
+  id        Int      @id @default(autoincrement())
+  name      String? @db.NVarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  feeders Feeder[]
+  equipmentData EquipmentData[]
+
+  @@map("starter_types")
+}
+
+model SourceType {
+  id        Int      @id @default(autoincrement())
+  name      String? @db.NVarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  feeders Feeder[]
+
+  @@map("source_types")
+}
+
+model BreakerType {
+  id        Int      @id @default(autoincrement())
+  name      String? @db.NVarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  feeders Feeder[]
+
+  @@map("breaker_types")
+}
+
+model FeederType {
+  id        Int      @id @default(autoincrement())
+  name      String? @db.NVarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  feeders Feeder[]
+
+  @@map("feeder_types")
+}
+
+model Feeder {
+  id            Int      @id @default(autoincrement())
+  panelId       Int @map("panel_id")
+  description   String?
+  ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
+  ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  starterTypeId Int? @map("starter_type_id")
+  feederTypeId  Int? @map("feeder_type_id")
+  sourceTypeId  Int? @map("source_type_id")
+  breakerTypeId Int? @map("breaker_type_id")
+  quantity      Int?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  // Relations
+  panel        Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  starterType  StarterType? @relation(fields: [starterTypeId], references: [id])
+  feederType   FeederType? @relation(fields: [feederTypeId], references: [id])
+  sourceType   SourceType? @relation(fields: [sourceTypeId], references: [id])
+  breakerType  BreakerType? @relation(fields: [breakerTypeId], references: [id])
+  feederLayouts FeederLayout[]
+
+  @@map("feeders")
+}
+
+model FeederLayout {
+  id        Int      @id @default(autoincrement())
+  feederId  Int @map("feeder_id")
+  x         Int?
+  y         Int?
+  width     Int?
+  height    Int?
+  viewType  String? @map("view_type") @db.NVarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relations
+  feeder Feeder @relation(fields: [feederId], references: [id], onDelete: Cascade)
+
+  @@map("feeder_layouts")
+}
+
+model SLConfig {
+  id         Int      @id @default(autoincrement())
+  panelId    Int @map("panel_id")
+  configJson String? @map("config_json") @db.NVarChar(4000)
+  generatedAt DateTime @default(now()) @map("generated_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  panel Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+
+  @@map("sl_config")
+}
+
+// ==============================
+// EQUIPMENT DATA MODELS
+// ==============================
+
+model EquipmentType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.NVarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime? @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  equipmentData EquipmentData[]
+
+  @@map("equipment_types")
+}
+
+model EquipmentData {
+  id            Int      @id @default(autoincrement())
+  panelId       Int @map("panel_id")
+  serialNumber  Int @map("serial_number")
+  description   String
+  ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
+  ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  starterTypeId Int? @map("starter_type_id")
+  quantity      Int @default(1)
+  totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)
+  equipmentTypeId Int? @map("equipment_type_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  // Relations
+  panel         Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  starterType   StarterType? @relation(fields: [starterTypeId], references: [id])
+  equipmentType EquipmentType? @relation(fields: [equipmentTypeId], references: [id])
+
+  @@unique([panelId, serialNumber])
+  @@map("equipment_data")
+} 

@@ -92,6 +92,143 @@ export default function CpLayout({ children }: CpLayoutProps) {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
+            {/* GA Forms Section */}
+            <SidebarGroup>
+              <SidebarGroupLabel>GA Forms</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/sl-config">
+                        <FileText className="w-4 h-4" />
+                        <span>SL Config</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/feeder-layouts">
+                        <FileText className="w-4 h-4" />
+                        <span>Feeder Layouts</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/feeders">
+                        <FileText className="w-4 h-4" />
+                        <span>Feeders</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/feeder-types">
+                        <FileText className="w-4 h-4" />
+                        <span>Feeder Types</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/breaker-types">
+                        <FileText className="w-4 h-4" />
+                        <span>Breaker Types</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/source-types">
+                        <FileText className="w-4 h-4" />
+                        <span>Source Types</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/starter-types">
+                        <FileText className="w-4 h-4" />
+                        <span>Starter Types</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/panel-locations">
+                        <FileText className="w-4 h-4" />
+                        <span>Panel Locations</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/equipment-types">
+                        <FileText className="w-4 h-4" />
+                        <span>Equipment Types</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/equipment-data">
+                        <FileText className="w-4 h-4" />
+                        <span>Equipment Data</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/panels">
+                        <FileText className="w-4 h-4" />
+                        <span>Panels</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/projects">
+                        <FileText className="w-4 h-4" />
+                        <span>Projects</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/clients">
+                        <FileText className="w-4 h-4" />
+                        <span>Clients</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/users">
+                        <FileText className="w-4 h-4" />
+                        <span>Users</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/teams">
+                        <FileText className="w-4 h-4" />
+                        <span>Teams</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="/cp/roles">
+                        <FileText className="w-4 h-4" />
+                        <span>Roles</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             <SidebarGroup>
               <SidebarGroupLabel>Settings</SidebarGroupLabel>
               <SidebarGroupContent>
