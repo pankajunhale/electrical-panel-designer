@@ -15,7 +15,7 @@ datasource db {
 // ==============================
 
 model Role {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String   @unique @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -28,7 +28,7 @@ model Role {
 }
 
 model Team {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String   @db.NVarChar(100)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -41,12 +41,12 @@ model Team {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   name         String   @db.NVarChar(100)
   email        String   @unique @db.NVarChar(100)
   passwordHash String   @map("password_hash")
-  roleId       Int? @map("role_id")
-  teamId       Int? @map("team_id")
+  roleId       String? @map("role_id")
+  teamId       String? @map("team_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime? @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
@@ -64,7 +64,7 @@ model User {
 // ==============================
 
 model Client {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   name         String   @db.NVarChar(100)
   address      String?
   contactEmail String? @map("contact_email") @db.NVarChar(100)
@@ -83,8 +83,8 @@ model Project {
   id        String   @id @default(uuid())
   name      String   @db.NVarChar(100)
   description String? @db.NVarChar(1000)
-  clientId  Int? @map("client_id")
-  userId    Int? @map("user_id")
+  clientId  String? @map("client_id")
+  userId    String? @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -98,7 +98,7 @@ model Project {
 }
 
 model PanelLocation {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   name        String? @db.NVarChar(100)
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
@@ -112,7 +112,7 @@ model PanelLocation {
 }
 
 model Panel {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   projectId    String @map("project_id")
   name         String @db.NVarChar(100)
   description  String?
@@ -120,7 +120,7 @@ model Panel {
   width        Int?
   height       Int?
   depth        Int?
-  locationId   Int? @map("location_id")
+  locationId   String? @map("location_id")
   frontViewUrl String? @map("front_view_url")
   rearViewUrl  String? @map("rear_view_url")
   status       String @default("draft") @db.NVarChar(20)
@@ -139,7 +139,7 @@ model Panel {
 }
 
 model StarterType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -153,7 +153,7 @@ model StarterType {
 }
 
 model SourceType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -166,7 +166,7 @@ model SourceType {
 }
 
 model BreakerType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -179,7 +179,7 @@ model BreakerType {
 }
 
 model FeederType {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String? @db.NVarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
@@ -192,15 +192,15 @@ model FeederType {
 }
 
 model Feeder {
-  id            Int      @id @default(autoincrement())
-  panelId       Int @map("panel_id")
+  id            String   @id @default(uuid())
+  panelId       String @map("panel_id")
   description   String?
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
-  starterTypeId Int? @map("starter_type_id")
-  feederTypeId  Int? @map("feeder_type_id")
-  sourceTypeId  Int? @map("source_type_id")
-  breakerTypeId Int? @map("breaker_type_id")
+  starterTypeId String? @map("starter_type_id")
+  feederTypeId  String? @map("feeder_type_id")
+  sourceTypeId  String? @map("source_type_id")
+  breakerTypeId String? @map("breaker_type_id")
   quantity      Int?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
@@ -218,8 +218,8 @@ model Feeder {
 }
 
 model FeederLayout {
-  id        Int      @id @default(autoincrement())
-  feederId  Int @map("feeder_id")
+  id        String   @id @default(uuid())
+  feederId  String @map("feeder_id")
   x         Int?
   y         Int?
   width     Int?
@@ -236,8 +236,8 @@ model FeederLayout {
 }
 
 model SLConfig {
-  id         Int      @id @default(autoincrement())
-  panelId    Int @map("panel_id")
+  id         String   @id @default(uuid())
+  panelId    String @map("panel_id")
   configJson String? @map("config_json") @db.NVarChar(4000)
   generatedAt DateTime @default(now()) @map("generated_at")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -255,7 +255,7 @@ model SLConfig {
 // ==============================
 
 model EquipmentType {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   name        String   @unique @db.NVarChar(100)
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
@@ -269,16 +269,16 @@ model EquipmentType {
 }
 
 model EquipmentData {
-  id            Int      @id @default(autoincrement())
-  panelId       Int @map("panel_id")
+  id            String   @id @default(uuid())
+  panelId       String @map("panel_id")
   serialNumber  Int @map("serial_number")
   description   String
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
-  starterTypeId Int? @map("starter_type_id")
+  starterTypeId String? @map("starter_type_id")
   quantity      Int @default(1)
   totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)
-  equipmentTypeId Int? @map("equipment_type_id")
+  equipmentTypeId String? @map("equipment_type_id")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
