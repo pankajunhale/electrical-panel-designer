@@ -166,6 +166,143 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* GA Forms Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>GA Forms</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/SLConfigForm">
+                    <FileText className="w-4 h-4" />
+                    <span>SL Config</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/FeederLayoutsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Feeder Layouts</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/FeedersForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Feeders</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/FeederTypesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Feeder Types</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/BreakerTypesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Breaker Types</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/SourceTypesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Source Types</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/StarterTypesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Starter Types</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/PanelLocationsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Panel Locations</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/EquipmentTypesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Equipment Types</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/EquipmentDataForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Equipment Data</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/PanelsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Panels</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/ProjectsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Projects</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/ClientsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Clients</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/UsersForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Users</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/TeamsForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Teams</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/ga/forms/RolesForm">
+                    <FileText className="w-4 h-4" />
+                    <span>Roles</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>

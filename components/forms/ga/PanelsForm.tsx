@@ -1,0 +1,378 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { panelsSchema, PanelsFormData } from "@/schema/ga/panels";
+import { useEffect } from "react";
+import {
+  Form,
+  FormItem,
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { useTransition } from "react";
+import { useActionState } from "react";
+import { submitPanels } from "@/actions/ga/panels";
+
+interface PanelsFormProps {
+  onNext?: (data: PanelsFormData) => void;
+  onBack?: () => void;
+  initialData?: PanelsFormData;
+  isLoading?: boolean;
+}
+
+export function PanelsForm({
+  onNext,
+  onBack,
+  initialData,
+  isLoading = false,
+}: PanelsFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const [state, formAction] = useActionState(submitPanels, {
+    errors: {},
+    message: "",
+  });
+
+  const form = useForm<PanelsFormData>({
+    resolver: zodResolver(panelsSchema),
+    defaultValues: initialData || {
+      project_id: undefined,
+      name: "",
+      description: "",
+      voltage_level: "",
+      width: undefined,
+      height: undefined,
+      depth: undefined,
+      location_id: undefined,
+      front_view_url: "",
+      rear_view_url: "",
+      status: "draft",
+    },
+    mode: "onChange",
+  });
+
+  useEffect(() => {
+    console.log("PanelsForm initialData:", initialData);
+  }, [initialData]);
+
+  // Handle successful submission
+  useEffect(() => {
+    if (state.data && Object.keys(state.errors).length === 0) {
+      onNext?.(state.data);
+    }
+  }, [state, onNext]);
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(() => {
+            const formData = new FormData();
+            Object.entries(data).forEach(([key, value]) => {
+              if (value !== undefined && value !== null) {
+                formData.append(key, value.toString());
+              }
+            });
+            formAction(formData);
+          });
+        })}
+        className="space-y-8"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>
+                  Panel Name <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter panel name"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="project_id"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Project ID</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter project ID"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="voltage_level"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Voltage Level</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter voltage level"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Status</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="width"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Width (mm)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter width"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="height"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Height (mm)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter height"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="depth"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Depth (mm)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter depth"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="location_id"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Location ID</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Enter location ID"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value)
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="front_view_url"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Front View URL</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter front view URL"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="rear_view_url"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel>Rear View URL</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter rear view URL"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter panel description"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {state.message && (
+          <div
+            className={`p-4 rounded-md ${
+              Object.keys(state.errors).length === 0
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : "bg-red-50 text-red-800 border border-red-200"
+            }`}
+          >
+            {state.message}
+          </div>
+        )}
+
+        <div className="flex justify-between">
+          {onBack && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              disabled={isPending}
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={isPending || isLoading}
+            className="ml-auto"
+          >
+            {isPending ? "Submitting..." : "Submit"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
