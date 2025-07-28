@@ -11,16 +11,20 @@ import {
 } from "@/components/ui/card";
 import { LogOut, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export default function LogoutPage() {
   const router = useRouter();
 
-  const handleLogout = () => {
-    // Here you would typically clear auth tokens, cookies, etc.
-    console.log("Logging out...");
-
-    // Redirect to login page
-    router.push("/auth/login");
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        callbackUrl: "/auth/login",
+        redirect: true,
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleCancel = () => {

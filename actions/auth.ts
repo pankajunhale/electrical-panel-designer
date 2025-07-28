@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { signIn, signOut } from "next-auth/react";
+import bcrypt from "bcryptjs";
 import { loginSchema, registerSchema } from "@/schema/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function loginAction(
   prevState: { errors: Record<string, string[]>; message: string },
@@ -26,22 +29,14 @@ export async function loginAction(
   const { email, password } = validatedFields.data;
 
   try {
-    // Here you would typically:
-    // 1. Check if user exists
-    // 2. Verify password
-    // 3. Create session/token
-    // 4. Store in database
+    // Note: NextAuth handles the actual authentication in the authorize callback
+    // This action can be used for client-side form handling
+    // The actual authentication happens through the NextAuth sign-in API
 
-    console.log("Login attempt:", { email, password });
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // For demo purposes, let's say login is successful
-    // In a real app, you'd check credentials here
-
-    revalidatePath("/");
-    redirect("/");
+    return {
+      errors: {},
+      message: "Please use the sign-in form",
+    };
   } catch (error) {
     return {
       errors: {},
@@ -76,29 +71,48 @@ export async function registerAction(
   const { firstName, lastName, email, phone, password } = validatedFields.data;
 
   try {
-    // Here you would typically:
-    // 1. Check if user already exists
-    // 2. Hash the password
-    // 3. Create user in database
-    // 4. Send verification email
-
-    console.log("Register attempt:", {
-      firstName,
-      lastName,
-      email,
-      phone,
-      password,
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (existingUser) {
+      return {
+        errors: { email: ["Email already exists"] },
+        message: "User already exists",
+      };
+    }
 
-    // For demo purposes, let's say registration is successful
-    // In a real app, you'd create the user here
+    // Get default role (you might want to create a default role first)
+    const defaultRole = await prisma.role.findFirst({
+      where: { name: "User" }, // or whatever your default role is
+    });
+
+    if (!defaultRole) {
+      return {
+        errors: {},
+        message: "System error: Default role not found",
+      };
+    }
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Create user in database
+    const user = await prisma.user.create({
+      data: {
+        name: `${firstName} ${lastName}`,
+        email,
+        passwordHash,
+        roleId: defaultRole.id,
+        // phone can be added to schema if needed
+      },
+    });
 
     revalidatePath("/");
     redirect("/auth/login?message=Account created successfully");
   } catch (error) {
+    console.error("Registration error:", error);
     return {
       errors: {},
       message: "Failed to create account",
@@ -108,16 +122,8 @@ export async function registerAction(
 
 export async function logoutAction() {
   try {
-    // Here you would typically:
-    // 1. Clear session/token
-    // 2. Remove from database
-    // 3. Clear cookies
-
-    console.log("Logout attempt");
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
+    // NextAuth handles logout through signOut()
+    // This can be called from client components
     revalidatePath("/");
     redirect("/auth/login");
   } catch (error) {
