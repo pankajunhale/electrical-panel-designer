@@ -30,6 +30,7 @@ export { IncomerDetailsForm } from "./IncomerDetailsForm";
 export { IncomerTypesForm } from "./IncomerTypesForm";
 export { MakeDetailsForm } from "./MakeDetailsForm";
 export { PanelDetailsForm } from "./PanelDetailsForm";
+export { PanelDataImportForm } from "./PanelDataImportForm";
 export { RatingDetailsForm } from "./RatingDetailsForm";
 export { SystemDetailsForm } from "./SystemDetailsForm";
 export { LoginForm } from "./login-form";

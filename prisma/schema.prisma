@@ -427,6 +427,10 @@ model EquipmentData {
   quantity      Int @default(1)
   totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)
   equipmentTypeId String? @map("equipment_type_id")
+  // Physical dimensions for equipment layout
+  height        Int?
+  width         Int?
+  depth         Int?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
