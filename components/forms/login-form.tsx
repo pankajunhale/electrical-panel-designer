@@ -44,7 +44,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid credentials");
+        setError("Invalid credentials...");
       } else {
         router.push(callbackUrl);
       }
@@ -56,9 +56,9 @@ export function LoginForm() {
   return (
     <Card className="w-full bg-white/5 border-white/20">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-white">Sign in</CardTitle>
+        <CardTitle className="text-2xl text-white">Sign in:</CardTitle>
         <CardDescription className="text-white/70">
-          Enter your email below to sign in to your account
+          Enter your email below to sign in to your
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
