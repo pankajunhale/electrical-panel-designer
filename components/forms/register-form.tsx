@@ -3,26 +3,28 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2 } from "lucide-react";
 import { registerSchema, type RegisterFormData } from "@/schema/auth";
 import { registerAction } from "@/actions/auth";
-import { useActionState } from "react";
-
-const initialState = {
-  errors: {},
-  message: "",
-};
+import { useTransition } from "react";
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = React.useState(false);

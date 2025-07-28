@@ -2,11 +2,11 @@ import { LoginForm } from "@/components/forms/login-form";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600/80 to-purple-700/80 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Centered SamCon Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center space-x-3 mb-4">
+    <div className="min-h-svh bg-gradient-to-br from-blue-600/80 to-purple-700/80 flex flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        {/* Brand Logo */}
+        <div className="flex flex-col items-center gap-6 mb-8">
+          <a href="/" className="flex items-center gap-3 font-medium">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -22,40 +22,32 @@ export default function LoginPage() {
               </svg>
             </div>
             <span className="text-3xl font-bold text-white">SamCon</span>
-          </div>
+          </a>
           <p className="text-white/80 text-center text-sm">
-            Welcome to your design workspace
+            Welcome to your electrical panel design workspace
           </p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-8">
-          <div className="flex flex-col space-y-2 text-center mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
-              Welcome back
-            </h1>
-            <p className="text-sm text-white/70">
-              Enter your credentials to access your account
-            </p>
-          </div>
-          <LoginForm />
-          <p className="px-8 text-center text-sm text-white/60 mt-6">
-            By clicking continue, you agree to our{" "}
-            <a
-              href="/terms"
-              className="underline underline-offset-4 hover:text-white"
-            >
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a
-              href="/privacy"
-              className="underline underline-offset-4 hover:text-white"
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
+        {/* Login Form - now simplified since form handles its own card */}
+        <LoginForm />
+
+        {/* Terms & Privacy */}
+        <div className="text-center text-xs text-white/60 mt-6">
+          By signing in, you agree to our{" "}
+          <a
+            href="/terms"
+            className="underline underline-offset-4 hover:text-white transition-colors"
+          >
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            className="underline underline-offset-4 hover:text-white transition-colors"
+          >
+            Privacy Policy
+          </a>
+          .
         </div>
       </div>
     </div>
