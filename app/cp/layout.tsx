@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Sidebar,
@@ -19,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Settings, Users, FileText, BarChart3, Home, Zap } from "lucide-react";
+import { UserDropdown } from "@/components/user-dropdown";
 
 interface CpLayoutProps {
   children: React.ReactNode;
@@ -245,17 +248,8 @@ export default function CpLayout({ children }: CpLayoutProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="border-t px-6 py-4">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatars/01.png" alt="User" />
-                <AvatarFallback>CP</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Control Panel</span>
-                <span className="truncate text-xs">admin@example.com</span>
-              </div>
-            </div>
+          <SidebarFooter className="border-t px-2 py-2">
+            <UserDropdown />
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>

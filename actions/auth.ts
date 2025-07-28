@@ -98,15 +98,44 @@ export async function registerAction(
     // Hash the password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user in database
-    const user = await prisma.user.create({
-      data: {
-        name: `${firstName} ${lastName}`,
-        email,
-        passwordHash,
-        roleId: defaultRole.id,
-        // phone can be added to schema if needed
-      },
+    // Use a transaction to ensure all operations succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      // Create user in database
+      const user = await tx.user.create({
+        data: {
+          name: `${firstName} ${lastName}`,
+          email,
+          passwordHash,
+          roleId: defaultRole.id,
+          // phone can be added to schema if needed
+        },
+      });
+
+      // Find or create default team
+      let defaultTeam = await tx.team.findFirst({
+        where: { name: "Default Team" },
+      });
+
+      if (!defaultTeam) {
+        // Create default team if it doesn't exist
+        defaultTeam = await tx.team.create({
+          data: {
+            name: "Default Team",
+            createdBy: user.id,
+          },
+        });
+      }
+
+      // Create UserTeam relationship to assign user to default team
+      await tx.userTeam.create({
+        data: {
+          userId: user.id,
+          teamId: defaultTeam.id,
+          createdBy: user.id,
+        },
+      });
+
+      return { user, defaultTeam };
     });
 
     revalidatePath("/");
@@ -122,11 +151,12 @@ export async function registerAction(
 
 export async function logoutAction() {
   try {
-    // NextAuth handles logout through signOut()
-    // This can be called from client components
+    // Clear any server-side session data if needed
     revalidatePath("/");
+    // Redirect to login page - client will handle NextAuth signOut
     redirect("/auth/login");
   } catch (error) {
+    console.error("Logout action error:", error);
     return {
       message: "Failed to logout",
     };

@@ -167,6 +167,7 @@ model UserTeam {
   @@index([userId])
   @@index([teamId])
   @@index([createdAt])
+  @@map("user_teams")
 }
 
 // ==============================

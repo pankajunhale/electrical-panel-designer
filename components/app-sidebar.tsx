@@ -15,6 +15,7 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react";
+import { UserDropdown } from "@/components/user-dropdown";
 
 import {
   Sidebar,
@@ -96,7 +97,7 @@ const settingsItems = [
   },
 ];
 
-// Auth items
+// Auth items (for logged out users)
 const authItems = [
   {
     title: "Login",
@@ -107,11 +108,6 @@ const authItems = [
     title: "Register",
     url: "/auth/register",
     icon: UserPlus,
-  },
-  {
-    title: "Logout",
-    url: "/auth/logout",
-    icon: LogOut,
   },
 ];
 
@@ -341,20 +337,8 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-semibold">JD</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground">
-                John Doe
-              </p>
-              <p className="text-xs text-sidebar-muted-foreground">
-                john@example.com
-              </p>
-            </div>
-          </div>
+        <div className="p-2">
+          <UserDropdown />
         </div>
       </SidebarFooter>
     </Sidebar>
