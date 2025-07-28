@@ -2,7 +2,7 @@ import { LoginForm } from "@/components/forms/login-form";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-svh bg-gradient-to-br from-blue-600/80 to-purple-700/80 flex flex-col items-center justify-center gap-6 p-6 md:p-10">
+    <div className="min-h-svh flex flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="w-full max-w-sm">
         {/* Brand Logo */}
         <div className="flex flex-col items-center gap-6 mb-8">
