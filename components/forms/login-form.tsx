@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,17 +18,13 @@ import {
 } from "@/components/ui/card";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { loginSchema, type LoginFormData } from "@/schema/auth";
-import { loginAction } from "@/actions/auth";
-import { useActionState } from "react";
-
-const initialState = {
-  errors: {},
-  message: "",
-};
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
-  const [state, formAction] = useActionState(loginAction, initialState);
+  const [error, setError] = React.useState<string>("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/cp";
 
   const {
     register,
@@ -37,10 +35,22 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const formData = new FormData();
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-    formAction(formData);
+    try {
+      setError("");
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid credentials");
+      } else {
+        router.push(callbackUrl);
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.");
+    }
   };
 
   return (
@@ -105,8 +115,8 @@ export function LoginForm() {
               <p className="text-red-400 text-sm">{errors.password.message}</p>
             )}
           </div>
-          {state.message && (
-            <p className="text-red-400 text-sm">{state.message}</p>
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
