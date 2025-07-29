@@ -211,6 +211,7 @@ model PanelLocation {
   createdByUser User? @relation("PanelLocationCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("PanelLocationUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, teamId], name: "panel_locations_name_team_unique")
   @@map("panel_locations")
 }
 
