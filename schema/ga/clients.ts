@@ -83,8 +83,8 @@ export type ClientQueryInput = z.infer<typeof ClientQuerySchema>;
 export type ClientFiltersInput = z.infer<typeof ClientFiltersSchema>;
 export type ClientSortInput = z.infer<typeof ClientSortSchema>;
 
-// Legacy export for backward compatibility
-export type ClientsFormData = ClientCreateInput;
+// Form data type for client creation
+export type ClientsFormData = z.infer<typeof ClientFormSchema>;
 
 // Validation helper functions
 export const validateClientCreate = (data: unknown) => {
@@ -107,5 +107,32 @@ export const validateClientSort = (data: unknown) => {
   return ClientSortSchema.safeParse(data);
 };
 
+// Form schema for client creation (without server-side fields)
+export const ClientFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Client name is required")
+    .max(100, "Client name must be less than 100 characters"),
+  address: z
+    .string()
+    .max(500, "Address must be less than 500 characters")
+    .optional(),
+  contactEmail: z
+    .string()
+    .email("Invalid email address")
+    .max(100, "Email must be less than 100 characters")
+    .optional()
+    .refine((email) => {
+      if (!email) return true; // Optional field
+      // Basic email format validation is handled by .email()
+      return true;
+    }, "Email validation will be checked on the server"),
+  contactNumber: z
+    .string()
+    .max(20, "Contact number must be less than 20 characters")
+    .regex(/^[\+]?[\d\s\-\(\)]+$/, "Please enter a valid phone number")
+    .optional(),
+});
+
 // Legacy schema export for backward compatibility
-export const clientsSchema = ClientCreateSchema;
+export const clientsSchema = ClientFormSchema;

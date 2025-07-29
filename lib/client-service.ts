@@ -84,6 +84,20 @@ export class ClientService {
       };
     } catch (error) {
       console.error("Error creating client:", error);
+
+      // Handle unique constraint violation
+      if (
+        error.code === "P2002" &&
+        error.meta?.target?.includes("contact_email")
+      ) {
+        return {
+          success: false,
+          data: null,
+          message: "A client with this email address already exists",
+          error: "Email address must be unique",
+        };
+      }
+
       return {
         success: false,
         data: null,

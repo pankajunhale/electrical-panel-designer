@@ -79,6 +79,19 @@ export class ProjectService {
       };
     } catch (error) {
       console.error("Error creating project:", error);
+
+      // Handle unique constraint violation
+      if (
+        error.code === "P2002" &&
+        error.meta?.target?.includes("projects_name_team_unique")
+      ) {
+        return {
+          success: false,
+          message: "A project with this name already exists in your team",
+          error: "Project name must be unique within the team",
+        };
+      }
+
       return {
         success: false,
         message: "Failed to create project",

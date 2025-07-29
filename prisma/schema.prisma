@@ -155,6 +155,7 @@ model Client {
   createdByUser User? @relation("ClientCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("ClientUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([contactEmail], name: "clients_contact_email_unique")
   @@index([teamId, createdAt])
   @@index([userId])
   @@index([name])
@@ -184,6 +185,7 @@ model Project {
   createdByUser User? @relation("ProjectCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, teamId], name: "projects_name_team_unique")
   @@index([teamId, createdAt])
   @@index([userId])
   @@index([clientId])
