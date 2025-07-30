@@ -327,6 +327,12 @@ model Feeder {
   description   String?
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  // Feeder/Contactor Rating Information
+  incomerRating Decimal? @map("incomer_rating") @db.Decimal(10,2) // Incomer rating in Amperes
+  contactorRating Decimal? @map("contactor_rating") @db.Decimal(10,2) // Contactor rating in Amperes
+  controlOperation String? @map("control_operation") @db.NVarChar(100) // e.g., "Run Local+Rem"
+  wiringMaterial String? @map("wiring_material") @db.NVarChar(50) // e.g., "Copper"
+  cablesBusBars String? @map("cables_bus_bars") @db.NVarChar(50) // e.g., "Cable" or "BusBars"
   starterTypeId String? @map("starter_type_id")
   feederTypeId  String? @map("feeder_type_id")
   sourceTypeId  String? @map("source_type_id")
@@ -427,6 +433,12 @@ model EquipmentData {
   description   String
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  // Equipment Rating Information
+  ampereRating  Decimal? @map("ampere_rating") @db.Decimal(10,2) // Current rating in Amperes
+  voltageRating Decimal? @map("voltage_rating") @db.Decimal(10,2) // Voltage rating in Volts
+  powerRating   Decimal? @map("power_rating") @db.Decimal(10,2) // Power rating in VA/W
+  poleCount     Int? @map("pole_count") // Number of poles
+  breakingCapacity Decimal? @map("breaking_capacity") @db.Decimal(10,2) // Breaking capacity in KA
   starterTypeId String? @map("starter_type_id")
   quantity      Int @default(1)
   totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)

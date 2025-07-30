@@ -32,6 +32,12 @@ interface ProcessedEquipment {
   powerRating?: number;
   poleCount?: number;
   breakingCapacity?: number;
+  // Feeder/Contactor Rating Information
+  incomerRating?: number;
+  contactorRating?: number;
+  controlOperation?: string;
+  wiringMaterial?: string;
+  cablesBusBars?: string;
 }
 
 interface ImportResult {
@@ -439,6 +445,74 @@ export class PanelDataImportService {
     } else {
       equipment.feederType = "Power Feeder";
     }
+
+    // Extract feeder/contactor rating information based on power rating
+    this.extractFeederContactorRatings(equipment);
+  }
+
+  /**
+   * Extracts feeder/contactor rating information based on power rating
+   * This method calculates typical incomer and contactor ratings based on motor power
+   */
+  private static extractFeederContactorRatings(equipment: ProcessedEquipment): void {
+    // Default values for control operation and wiring
+    equipment.controlOperation = "Run Local+Rem";
+    equipment.wiringMaterial = "Copper";
+    equipment.cablesBusBars = "Cable";
+
+    // Calculate incomer and contactor ratings based on power rating
+    if (equipment.ratingKw) {
+      // Calculate incomer rating based on power (typical motor current calculation)
+      // For 3-phase motors: I = P / (√3 × V × PF × η)
+      // Assuming 415V, 0.85 PF, 0.9 efficiency
+      const voltage = 415; // 3-phase voltage
+      const powerFactor = 0.85;
+      const efficiency = 0.9;
+      const incomerCurrent = (equipment.ratingKw * 1000) / (Math.sqrt(3) * voltage * powerFactor * efficiency);
+      
+      // Round to nearest standard rating
+      equipment.incomerRating = this.roundToStandardRating(incomerCurrent);
+      
+      // Contactor rating is typically 1.25 times the motor full load current
+      const contactorCurrent = incomerCurrent * 1.25;
+      equipment.contactorRating = this.roundToStandardRating(contactorCurrent);
+    } else if (equipment.ratingHp) {
+      // Convert HP to KW for calculation
+      const kwRating = equipment.ratingHp * 0.746;
+      equipment.ratingKw = kwRating;
+      
+      // Calculate ratings using the same method
+      const voltage = 415;
+      const powerFactor = 0.85;
+      const efficiency = 0.9;
+      const incomerCurrent = (kwRating * 1000) / (Math.sqrt(3) * voltage * powerFactor * efficiency);
+      
+      equipment.incomerRating = this.roundToStandardRating(incomerCurrent);
+      
+      const contactorCurrent = incomerCurrent * 1.25;
+      equipment.contactorRating = this.roundToStandardRating(contactorCurrent);
+    }
+  }
+
+  /**
+   * Rounds current rating to nearest standard rating
+   */
+  private static roundToStandardRating(current: number): number {
+    const standardRatings = [9, 12, 16, 18, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000];
+    
+    // Find the closest standard rating
+    let closest = standardRatings[0];
+    let minDifference = Math.abs(current - closest);
+    
+    for (const rating of standardRatings) {
+      const difference = Math.abs(current - rating);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closest = rating;
+      }
+    }
+    
+    return closest;
   }
 
   /**
@@ -708,6 +782,11 @@ export class PanelDataImportService {
         ratingKw: equipment.ratingKw || null,
         ratingHp: equipment.ratingHp || null,
         totalLoadKw,
+        ampereRating: equipment.ampereRating || null,
+        voltageRating: equipment.voltageRating || null,
+        powerRating: equipment.powerRating || null,
+        poleCount: equipment.poleCount || null,
+        breakingCapacity: equipment.breakingCapacity || null,
         height: equipment.height || null,
         width: equipment.width || null,
         equipmentTypeId,
@@ -724,6 +803,11 @@ export class PanelDataImportService {
         ratingKw: equipment.ratingKw || null,
         ratingHp: equipment.ratingHp || null,
         totalLoadKw,
+        ampereRating: equipment.ampereRating || null,
+        voltageRating: equipment.voltageRating || null,
+        powerRating: equipment.powerRating || null,
+        poleCount: equipment.poleCount || null,
+        breakingCapacity: equipment.breakingCapacity || null,
         height: equipment.height || null,
         width: equipment.width || null,
         equipmentTypeId,
@@ -757,6 +841,11 @@ export class PanelDataImportService {
         data: {
           ratingKw: equipment.ratingKw || null,
           ratingHp: equipment.ratingHp || null,
+          incomerRating: equipment.incomerRating || null,
+          contactorRating: equipment.contactorRating || null,
+          controlOperation: equipment.controlOperation || null,
+          wiringMaterial: equipment.wiringMaterial || null,
+          cablesBusBars: equipment.cablesBusBars || null,
           quantity: equipment.quantity,
           starterTypeId: starterTypeId || null,
           feederTypeId: feederTypeId || null,
@@ -774,6 +863,11 @@ export class PanelDataImportService {
           description: equipment.description,
           ratingKw: equipment.ratingKw || null,
           ratingHp: equipment.ratingHp || null,
+          incomerRating: equipment.incomerRating || null,
+          contactorRating: equipment.contactorRating || null,
+          controlOperation: equipment.controlOperation || null,
+          wiringMaterial: equipment.wiringMaterial || null,
+          cablesBusBars: equipment.cablesBusBars || null,
           quantity: equipment.quantity,
           starterTypeId: starterTypeId || null,
           feederTypeId: feederTypeId || null,
