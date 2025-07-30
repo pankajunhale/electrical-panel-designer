@@ -94,6 +94,8 @@ model User {
   updatedPanels Panel[] @relation("PanelUpdatedBy")
   createdFeeders Feeder[] @relation("FeederCreatedBy")
   updatedFeeders Feeder[] @relation("FeederUpdatedBy")
+  createdIncomers Incomer[] @relation("IncomerCreatedBy")
+  updatedIncomers Incomer[] @relation("IncomerUpdatedBy")
   createdFeederLayouts FeederLayout[] @relation("FeederLayoutCreatedBy")
   updatedFeederLayouts FeederLayout[] @relation("FeederLayoutUpdatedBy")
   createdSLConfigs SLConfig[] @relation("SLConfigCreatedBy")
@@ -239,6 +241,7 @@ model Panel {
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   location PanelLocation? @relation(fields: [locationId], references: [id])
   feeders  Feeder[]
+  incomers Incomer[]
   slConfigs SLConfig[]
   equipmentData EquipmentData[]
   createdByUser User? @relation("PanelCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -360,6 +363,29 @@ model Feeder {
   @@index([feederTypeId])
   @@index([createdAt])
   @@map("feeders")
+}
+
+model Incomer {
+  id            String   @id @default(uuid())
+  name          String   @db.NVarChar(100)
+  ampereRating  Decimal? @map("ampere_rating") @db.Decimal(10,2)
+  panelId       String @map("panel_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String? @map("created_by")
+  updatedBy     String? @map("updated_by")
+  version       Int @default(1)
+
+  // Relations
+  panel        Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("IncomerCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("IncomerUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([name, panelId], name: "incomers_name_panel_unique")
+  @@index([panelId])
+  @@index([createdAt])
+  @@map("incomers")
 }
 
 model FeederLayout {
