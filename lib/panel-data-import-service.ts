@@ -26,6 +26,12 @@ interface ProcessedEquipment {
   starterType?: string;
   breakerType?: string;
   feederType?: string;
+  // Additional specifications for control equipment
+  ampereRating?: number;
+  voltageRating?: number;
+  powerRating?: number;
+  poleCount?: number;
+  breakingCapacity?: number;
 }
 
 interface ImportResult {
@@ -42,16 +48,23 @@ interface ImportResult {
       breaker: number;
       feeder: number;
     };
+    equipmentTypeBreakdown: {
+      [equipmentType: string]: number;
+    };
   };
 }
 
 export class PanelDataImportService {
   private static readonly TYPE_CODE_MAPPING = {
     ACB: "Air Circuit Breaker",
-    SWITCH: "Switch/Control Panel",
+    SWITCH: "Control Equipment",
     STARTE: "Motor Starter",
     MCCB: "Molded Case Circuit Breaker",
     MPCB: "Motor Protection Circuit Breaker",
+    TRANSFORMER: "Control Transformer",
+    METERING: "Metering Equipment",
+    POWER_SUPPLY: "Power Supply",
+    CONTROL_SWITCH: "Control Switch",
   };
 
   private static readonly STARTER_PATTERNS = {
@@ -85,9 +98,22 @@ export class PanelDataImportService {
         throw new Error("Authentication required");
       }
 
+      // Check existing equipment types
+      console.log("=== Checking existing equipment types ===");
+      const existingTypes = await prisma.equipmentType.findMany({
+        select: { id: true, name: true, description: true },
+      });
+      console.log(
+        "Existing equipment types:",
+        existingTypes.map((t) => `${t.name} (${t.description})`)
+      );
+
       // Parse the raw tabular data
       const rawRows = this.parseTabularData(rawData);
+      console.log(`Parsed ${rawRows.length} raw rows from input data`);
+
       const processedData = this.processEquipmentData(rawRows);
+      console.log(`Processed ${processedData.length} equipment items`);
 
       if (processedData.length === 0) {
         throw new Error("No valid data found to import");
@@ -95,10 +121,12 @@ export class PanelDataImportService {
 
       // Group by panel for processing
       const panelGroups = this.groupByPanel(processedData);
+      console.log(`Grouped into ${panelGroups.size} panels`);
 
       let equipmentCreated = 0;
       let panelsCreated = 0;
       let typesCreated = { equipment: 0, starter: 0, breaker: 0, feeder: 0 };
+      const equipmentTypeBreakdown: { [equipmentType: string]: number } = {};
       const errors: string[] = [];
 
       // Process each panel group
@@ -116,18 +144,32 @@ export class PanelDataImportService {
           // Step 3: Create/find panel
           const panel = await this.ensurePanel(
             panelName,
-            project.id,
-            panelLocation.id,
+            project.record.id,
+            panelLocation.record.id,
             user.id
           );
           if (panel.created) panelsCreated++;
 
           // Step 4: Process equipment items for this panel
+          console.log(
+            `Processing ${equipmentItems.length} equipment items for panel "${panelName}"`
+          );
+
+          // Ensure unique serial numbers for each equipment item
+          let serialNumberCounter = 1;
+
           for (const equipment of equipmentItems) {
+            // Assign unique serial number
+            equipment.serialNumber = serialNumberCounter++;
             try {
+              console.log(
+                `Processing equipment: ${equipment.description} (Serial: ${equipment.serialNumber})`
+              );
+
               // Create equipment type
               const equipmentType = await this.ensureEquipmentType(
                 equipment.typeCode,
+                equipment.description,
                 user.id
               );
               if (equipmentType.created) typesCreated.equipment++;
@@ -163,19 +205,31 @@ export class PanelDataImportService {
               }
 
               // Step 5: Create equipment data record
-              await this.createEquipmentData(
+              console.log(
+                `Creating equipment data for: ${equipment.description} (Type: ${equipmentType.record.name})`
+              );
+              const equipmentData = await this.createEquipmentData(
                 panel.record.id,
                 equipment,
                 equipmentType.record.id,
                 starterType?.record.id,
                 user.id
               );
+              console.log(
+                `Created equipment data with ID: ${equipmentData.id}`
+              );
+
+              // Track equipment type breakdown
+              const equipmentTypeName = equipmentType.record.name;
+              equipmentTypeBreakdown[equipmentTypeName] =
+                (equipmentTypeBreakdown[equipmentTypeName] || 0) + 1;
 
               // Step 6: Create feeder if it's motor equipment
               if (
                 equipment.starterType &&
                 (equipment.ratingKw || equipment.ratingHp)
               ) {
+                console.log(`Creating feeder for: ${equipment.description}`);
                 await this.createFeeder(
                   panel.record.id,
                   equipment,
@@ -187,7 +241,14 @@ export class PanelDataImportService {
               }
 
               equipmentCreated++;
+              console.log(
+                `Successfully processed equipment: ${equipment.description}`
+              );
             } catch (itemError) {
+              console.error(
+                `Error processing "${equipment.description}":`,
+                itemError
+              );
               errors.push(
                 `Error processing "${equipment.description}": ${itemError}`
               );
@@ -198,6 +259,13 @@ export class PanelDataImportService {
         }
       }
 
+      // Log equipment type breakdown
+      console.log("=== Equipment Type Breakdown ===");
+      Object.entries(equipmentTypeBreakdown).forEach(([type, count]) => {
+        console.log(`${type}: ${count} items`);
+      });
+      console.log("================================");
+
       return {
         success: equipmentCreated > 0,
         processed: equipmentCreated,
@@ -207,6 +275,7 @@ export class PanelDataImportService {
           equipmentCreated,
           panelsCreated,
           typesCreated,
+          equipmentTypeBreakdown,
         },
       };
     } catch (error) {
@@ -220,6 +289,7 @@ export class PanelDataImportService {
           equipmentCreated: 0,
           panelsCreated: 0,
           typesCreated: { equipment: 0, starter: 0, breaker: 0, feeder: 0 },
+          equipmentTypeBreakdown: {},
         },
       };
     }
@@ -230,13 +300,17 @@ export class PanelDataImportService {
    */
   private static parseTabularData(rawData: string): RawEquipmentRow[] {
     const lines = rawData.trim().split("\n");
+    console.log(`Raw data has ${lines.length} lines`);
+
     if (lines.length < 2) return [];
 
-    return lines
+    const parsedRows = lines
       .slice(1)
-      .map((line) => {
+      .map((line, index) => {
         const columns = line.split("\t").map((col) => col.trim());
-        return {
+        console.log(`Line ${index + 2}: ${columns.join(" | ")}`);
+
+        const row = {
           slno: columns[0] || "",
           panelname: columns[1] || "",
           item: columns[2] || "",
@@ -245,8 +319,20 @@ export class PanelDataImportService {
           height: parseInt(columns[5]) || 0,
           width: parseInt(columns[6]) || 0,
         };
+
+        console.log(`Parsed row:`, row);
+        return row;
       })
-      .filter((row) => row.slno && row.panelname && row.item);
+      .filter((row) => {
+        const isValid = row.slno && row.panelname && row.item;
+        if (!isValid) {
+          console.log(`Filtered out invalid row:`, row);
+        }
+        return isValid;
+      });
+
+    console.log(`Parsed ${parsedRows.length} valid rows`);
+    return parsedRows;
   }
 
   /**
@@ -292,6 +378,36 @@ export class PanelDataImportService {
     const hpMatch = description.match(/(\d+(?:\.\d+)?)HP/i);
     if (hpMatch) {
       equipment.ratingHp = parseFloat(hpMatch[1]);
+    }
+
+    // Extract ampere rating
+    const ampMatch = description.match(/(\d+(?:\.\d+)?)A/i);
+    if (ampMatch) {
+      equipment.ampereRating = parseFloat(ampMatch[1]);
+    }
+
+    // Extract voltage rating
+    const voltMatch = description.match(/(\d+(?:\.\d+)?)V/i);
+    if (voltMatch) {
+      equipment.voltageRating = parseFloat(voltMatch[1]);
+    }
+
+    // Extract power rating (VA, W)
+    const powerMatch = description.match(/(\d+(?:\.\d+)?)(?:VA|W)/i);
+    if (powerMatch) {
+      equipment.powerRating = parseFloat(powerMatch[1]);
+    }
+
+    // Extract pole count
+    const poleMatch = description.match(/(\d+)P/i);
+    if (poleMatch) {
+      equipment.poleCount = parseInt(poleMatch[1]);
+    }
+
+    // Extract breaking capacity (KA)
+    const kaMatch = description.match(/(\d+(?:\.\d+)?)KA/i);
+    if (kaMatch) {
+      equipment.breakingCapacity = parseFloat(kaMatch[1]);
     }
 
     // Extract starter type
@@ -410,10 +526,17 @@ export class PanelDataImportService {
     return { record: panel, created };
   }
 
-  private static async ensureEquipmentType(typeCode: string, userId: string) {
-    const typeName =
-      this.TYPE_CODE_MAPPING[typeCode as keyof typeof this.TYPE_CODE_MAPPING] ||
-      typeCode;
+  private static async ensureEquipmentType(
+    typeCode: string,
+    description: string,
+    userId: string
+  ) {
+    // Determine equipment type based on description and type code
+    const typeName = this.getEquipmentTypeName(description, typeCode);
+
+    console.log(
+      `Looking for equipment type: "${typeName}" (from code: "${typeCode}", description: "${description}")`
+    );
 
     let equipmentType = await prisma.equipmentType.findFirst({
       where: { name: typeName },
@@ -421,6 +544,7 @@ export class PanelDataImportService {
 
     let created = false;
     if (!equipmentType) {
+      console.log(`Creating new equipment type: "${typeName}"`);
       equipmentType = await prisma.equipmentType.create({
         data: {
           id: nanoid(),
@@ -431,9 +555,64 @@ export class PanelDataImportService {
         },
       });
       created = true;
+    } else {
+      console.log(
+        `Found existing equipment type: "${typeName}" with ID: ${equipmentType.id}`
+      );
     }
 
     return { record: equipmentType, created };
+  }
+
+  /**
+   * Determines equipment type name based on description and type code
+   */
+  private static getEquipmentTypeName(
+    description: string,
+    typeCode: string
+  ): string {
+    const upperDesc = description.toUpperCase();
+
+    console.log(
+      `Analyzing equipment: "${description}" with type code: "${typeCode}"`
+    );
+
+    // Specific equipment type detection based on description
+    if (upperDesc.includes("TRANSFORMER")) {
+      console.log(`  → Detected as Control Transformer`);
+      return "Control Transformer";
+    }
+    if (upperDesc.includes("METERING") || upperDesc.includes("AM/VM/IL")) {
+      console.log(`  → Detected as Metering Equipment`);
+      return "Metering Equipment";
+    }
+    if (upperDesc.includes("POWER SUPPLY") || upperDesc.includes("DC")) {
+      console.log(`  → Detected as Power Supply`);
+      return "Power Supply";
+    }
+    if (upperDesc.includes("SWITCH") && !upperDesc.includes("STARTER")) {
+      console.log(`  → Detected as Control Switch`);
+      return "Control Switch";
+    }
+    if (upperDesc.includes("ACB")) {
+      console.log(`  → Detected as Air Circuit Breaker`);
+      return "Air Circuit Breaker";
+    }
+    if (upperDesc.includes("MCCB")) {
+      console.log(`  → Detected as Molded Case Circuit Breaker`);
+      return "Molded Case Circuit Breaker";
+    }
+    if (upperDesc.includes("MPCB")) {
+      console.log(`  → Detected as Motor Protection Circuit Breaker`);
+      return "Motor Protection Circuit Breaker";
+    }
+
+    // Fallback to type code mapping
+    const fallbackType =
+      this.TYPE_CODE_MAPPING[typeCode as keyof typeof this.TYPE_CODE_MAPPING] ||
+      typeCode;
+    console.log(`  → Fallback to: ${fallbackType}`);
+    return fallbackType;
   }
 
   private static async ensureStarterType(starterType: string, userId: string) {
@@ -506,8 +685,37 @@ export class PanelDataImportService {
     starterTypeId: string | undefined,
     userId: string
   ) {
-    return await prisma.equipmentData.create({
-      data: {
+    // Calculate total load KW
+    const totalLoadKw = equipment.ratingKw
+      ? equipment.ratingKw * equipment.quantity
+      : null;
+
+    // Calculate total power rating for control equipment
+    const totalPowerRating = equipment.powerRating
+      ? equipment.powerRating * equipment.quantity
+      : null;
+
+    return await prisma.equipmentData.upsert({
+      where: {
+        panelId_serialNumber: {
+          panelId,
+          serialNumber: equipment.serialNumber,
+        },
+      },
+      update: {
+        description: equipment.description,
+        quantity: equipment.quantity,
+        ratingKw: equipment.ratingKw || null,
+        ratingHp: equipment.ratingHp || null,
+        totalLoadKw,
+        height: equipment.height || null,
+        width: equipment.width || null,
+        equipmentTypeId,
+        starterTypeId: starterTypeId || null,
+        updatedBy: userId,
+        version: { increment: 1 },
+      },
+      create: {
         id: nanoid(),
         panelId,
         serialNumber: equipment.serialNumber,
@@ -515,6 +723,9 @@ export class PanelDataImportService {
         quantity: equipment.quantity,
         ratingKw: equipment.ratingKw || null,
         ratingHp: equipment.ratingHp || null,
+        totalLoadKw,
+        height: equipment.height || null,
+        width: equipment.width || null,
         equipmentTypeId,
         starterTypeId: starterTypeId || null,
         createdBy: userId,
@@ -531,20 +742,46 @@ export class PanelDataImportService {
     breakerTypeId: string | undefined,
     userId: string
   ) {
-    return await prisma.feeder.create({
-      data: {
-        id: nanoid(),
+    // Check if feeder already exists for this panel and description
+    const existingFeeder = await prisma.feeder.findFirst({
+      where: {
         panelId,
         description: equipment.description,
-        ratingKw: equipment.ratingKw || null,
-        ratingHp: equipment.ratingHp || null,
-        quantity: equipment.quantity,
-        starterTypeId: starterTypeId || null,
-        feederTypeId: feederTypeId || null,
-        breakerTypeId: breakerTypeId || null,
-        createdBy: userId,
-        version: 1,
       },
     });
+
+    if (existingFeeder) {
+      // Update existing feeder
+      return await prisma.feeder.update({
+        where: { id: existingFeeder.id },
+        data: {
+          ratingKw: equipment.ratingKw || null,
+          ratingHp: equipment.ratingHp || null,
+          quantity: equipment.quantity,
+          starterTypeId: starterTypeId || null,
+          feederTypeId: feederTypeId || null,
+          breakerTypeId: breakerTypeId || null,
+          updatedBy: userId,
+          version: { increment: 1 },
+        },
+      });
+    } else {
+      // Create new feeder
+      return await prisma.feeder.create({
+        data: {
+          id: nanoid(),
+          panelId,
+          description: equipment.description,
+          ratingKw: equipment.ratingKw || null,
+          ratingHp: equipment.ratingHp || null,
+          quantity: equipment.quantity,
+          starterTypeId: starterTypeId || null,
+          feederTypeId: feederTypeId || null,
+          breakerTypeId: breakerTypeId || null,
+          createdBy: userId,
+          version: 1,
+        },
+      });
+    }
   }
 }

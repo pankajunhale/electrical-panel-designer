@@ -18,6 +18,9 @@ export interface ImportActionResult {
       breaker: number;
       feeder: number;
     };
+    equipmentTypeBreakdown?: {
+      [equipmentType: string]: number;
+    };
   };
 }
 
@@ -67,11 +70,22 @@ export async function importPanelEquipmentData(
     revalidatePath("/cp/feeders");
     revalidatePath("/cp/projects");
 
+    // Create detailed success message with equipment type breakdown
+    let message = result.success
+      ? `Successfully imported ${result.processed} equipment items`
+      : `Import failed with ${result.errors.length} errors`;
+
+    if (result.success && result.summary?.equipmentTypeBreakdown) {
+      const breakdown = result.summary.equipmentTypeBreakdown;
+      const typeDetails = Object.entries(breakdown)
+        .map(([type, count]) => `${count} ${type}`)
+        .join(", ");
+      message += `\n\nEquipment Type Breakdown:\n${typeDetails}`;
+    }
+
     return {
       success: result.success,
-      message: result.success
-        ? `Successfully imported ${result.processed} equipment items`
-        : `Import failed with ${result.errors.length} errors`,
+      message,
       processed: result.processed,
       failed: result.failed,
       errors: result.errors,

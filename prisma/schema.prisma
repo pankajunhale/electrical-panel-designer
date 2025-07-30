@@ -244,6 +244,7 @@ model Panel {
   createdByUser User? @relation("PanelCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("PanelUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, projectId], name: "panels_name_project_unique")
   @@index([projectId, status])
   @@index([status])
   @@index([name])

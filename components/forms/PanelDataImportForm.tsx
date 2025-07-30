@@ -24,6 +24,17 @@ import {
   type ImportActionResult,
 } from "@/actions/panel-data-import";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import {
+  Zap,
+  Settings,
+  Gauge,
+  Power,
+  Shield,
+  Cpu,
+  Battery,
+  RotateCcw,
+} from "lucide-react";
 
 interface Project {
   id: string;
@@ -32,6 +43,40 @@ interface Project {
 
 interface PanelDataImportFormProps {
   projects: Project[];
+}
+
+// Function to get icon for equipment type
+function getEquipmentTypeIcon(type: string) {
+  const upperType = type.toUpperCase();
+
+  if (
+    upperType.includes("CIRCUIT BREAKER") ||
+    upperType.includes("ACB") ||
+    upperType.includes("MCCB")
+  ) {
+    return <Shield className="w-4 h-4" />;
+  }
+  if (upperType.includes("TRANSFORMER")) {
+    return <Power className="w-4 h-4" />;
+  }
+  if (upperType.includes("SWITCH")) {
+    return <Settings className="w-4 h-4" />;
+  }
+  if (upperType.includes("METERING")) {
+    return <Gauge className="w-4 h-4" />;
+  }
+  if (upperType.includes("MOTOR STARTER") || upperType.includes("STARTER")) {
+    return <RotateCcw className="w-4 h-4" />;
+  }
+  if (upperType.includes("POWER SUPPLY")) {
+    return <Battery className="w-4 h-4" />;
+  }
+  if (upperType.includes("PROTECTION")) {
+    return <Shield className="w-4 h-4" />;
+  }
+
+  // Default icon for other types
+  return <Zap className="w-4 h-4" />;
 }
 
 export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
@@ -43,6 +88,10 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
   const [importResult, setImportResult] = useState<ImportActionResult | null>(
     null
   );
+  const [selectedEquipmentType, setSelectedEquipmentType] = useState<
+    string | null
+  >(null);
+  const [importedEquipmentData, setImportedEquipmentData] = useState<any[]>([]);
 
   const sampleData = `slno	panelname	item	subqty	typecode	height	width
 01	MCC VIENTN	2000A 4P MDO ACB MP	1	ACB	750	1000
@@ -96,6 +145,7 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
 
     setIsImporting(true);
     setImportResult(null);
+    setSelectedEquipmentType(null);
 
     try {
       const formData = new FormData();
@@ -104,6 +154,25 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
 
       const result = await importPanelEquipmentData(formData);
       setImportResult(result);
+
+      // Parse and store equipment data for display
+      if (result.success) {
+        const lines = tabularData.trim().split("\n");
+        const equipmentData = lines.slice(1).map((line, index) => {
+          const columns = line.split("\t").map((col) => col.trim());
+          return {
+            id: index + 1,
+            slno: columns[0] || (index + 1).toString().padStart(2, "0"),
+            panelname: columns[1] || "",
+            item: columns[2] || "",
+            subqty: parseInt(columns[3]) || 1,
+            typecode: columns[4] || "",
+            height: parseInt(columns[5]) || 0,
+            width: parseInt(columns[6]) || 0,
+          };
+        });
+        setImportedEquipmentData(equipmentData);
+      }
     } catch (error) {
       setImportResult({
         success: false,
@@ -114,6 +183,12 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
       });
     }
     setIsImporting(false);
+  };
+
+  const handleEquipmentTypeClick = (equipmentType: string | null) => {
+    setSelectedEquipmentType(
+      selectedEquipmentType === equipmentType ? null : equipmentType
+    );
   };
 
   return (
@@ -248,7 +323,14 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
 
             {importResult.summary && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedEquipmentType === null
+                      ? "bg-green-100 border-2 border-green-300"
+                      : "bg-green-50 hover:bg-green-100"
+                  }`}
+                  onClick={() => handleEquipmentTypeClick(null)}
+                >
                   <div className="text-2xl font-bold text-green-600">
                     {importResult.summary.equipmentCreated}
                   </div>
@@ -280,6 +362,42 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
               </div>
             )}
 
+            {/* Equipment Type Breakdown */}
+            {importResult.summary?.equipmentTypeBreakdown && (
+              <div className="mt-6">
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Equipment Type Breakdown
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {Object.entries(
+                    importResult.summary.equipmentTypeBreakdown
+                  ).map(([type, count]) => (
+                    <div
+                      key={type}
+                      className={`text-center p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedEquipmentType === type
+                          ? "bg-blue-100 border-2 border-blue-300"
+                          : "bg-gray-50 hover:bg-gray-100"
+                      }`}
+                      onClick={() => handleEquipmentTypeClick(type)}
+                    >
+                      <div className="flex justify-center mb-1">
+                        <div className="text-gray-500">
+                          {getEquipmentTypeIcon(type)}
+                        </div>
+                      </div>
+                      <div className="text-lg font-bold text-gray-700">
+                        {count}
+                      </div>
+                      <div className="text-xs text-gray-600 truncate">
+                        {type}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {importResult.errors.length > 0 && (
               <div className="mt-4">
                 <h4 className="font-medium text-red-600 mb-2">Errors:</h4>
@@ -292,6 +410,96 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
                 </ul>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Equipment Data Table */}
+      {importResult?.success && importedEquipmentData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Equipment Data Details
+              {selectedEquipmentType && (
+                <Badge variant="secondary">
+                  Filtered: {selectedEquipmentType}
+                </Badge>
+              )}
+              {selectedEquipmentType === null && (
+                <Badge variant="default">
+                  All Equipment ({importedEquipmentData.length} items)
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {selectedEquipmentType
+                ? `Showing equipment items for ${selectedEquipmentType}`
+                : "Showing all imported equipment items"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              title=""
+              data={importedEquipmentData.filter((item) => {
+                if (!selectedEquipmentType) return true;
+
+                // Filter based on equipment type detection
+                const itemDescription = item.item.toUpperCase();
+                const typeName = selectedEquipmentType.toUpperCase();
+
+                if (
+                  typeName.includes("CIRCUIT BREAKER") ||
+                  typeName.includes("ACB") ||
+                  typeName.includes("MCCB")
+                ) {
+                  return (
+                    itemDescription.includes("ACB") ||
+                    itemDescription.includes("MCCB")
+                  );
+                }
+                if (typeName.includes("TRANSFORMER")) {
+                  return itemDescription.includes("TRANSFORMER");
+                }
+                if (typeName.includes("SWITCH")) {
+                  return (
+                    itemDescription.includes("SWITCH") &&
+                    !itemDescription.includes("STARTER")
+                  );
+                }
+                if (typeName.includes("METERING")) {
+                  return (
+                    itemDescription.includes("METERING") ||
+                    itemDescription.includes("AM/VM/IL")
+                  );
+                }
+                if (
+                  typeName.includes("MOTOR STARTER") ||
+                  typeName.includes("STARTER")
+                ) {
+                  return itemDescription.includes("STARTER");
+                }
+                if (typeName.includes("POWER SUPPLY")) {
+                  return (
+                    itemDescription.includes("POWER SUPPLY") ||
+                    itemDescription.includes("DC")
+                  );
+                }
+                if (typeName.includes("PROTECTION")) {
+                  return itemDescription.includes("MPCB");
+                }
+
+                return false;
+              })}
+              columns={[
+                { key: "slno", label: "SL No", type: "text" },
+                { key: "panelname", label: "Panel Name", type: "text" },
+                { key: "item", label: "Equipment Description", type: "text" },
+                { key: "subqty", label: "Quantity", type: "number" },
+                { key: "typecode", label: "Type Code", type: "text" },
+                { key: "height", label: "Height (mm)", type: "number" },
+                { key: "width", label: "Width (mm)", type: "number" },
+              ]}
+            />
           </CardContent>
         </Card>
       )}

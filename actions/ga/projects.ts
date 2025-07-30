@@ -117,3 +117,45 @@ export async function submitProjects(
     };
   }
 }
+
+export async function getAllProjects() {
+  try {
+    const result = await ProjectService.getProjects({});
+    return result;
+  } catch (error) {
+    console.error("Error getting projects:", error);
+    return {
+      success: false,
+      message: "Failed to retrieve projects",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getProjectById(id: string) {
+  try {
+    const result = await ProjectService.getProjectById(id);
+    return result;
+  } catch (error) {
+    console.error("Error getting project:", error);
+    return {
+      success: false,
+      message: "Failed to retrieve project",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function searchProjects(search: string) {
+  try {
+    const result = await ProjectService.getProjects({ search });
+    return result;
+  } catch (error) {
+    console.error("Error searching projects:", error);
+    return {
+      success: false,
+      message: "Failed to search projects",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
