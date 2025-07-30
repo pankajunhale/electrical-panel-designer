@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { getAllProjects } from "./projects";
 import { getAllPanelLocations } from "./panel-locations";
+import { Project } from "@/dto/project.dto";
 
 type ActionState = {
   errors: Record<string, string[]>;
@@ -357,7 +358,12 @@ export async function searchPanels(search: string, projectId?: string) {
 // New actions for dropdown data
 export async function getProjectsForDropdown() {
   try {
-    const result = await getAllProjects();
+    const result: {
+      success: boolean;
+      message: string;
+      error?: string;
+      data?: { projects: Project[] } | null;
+    } = await getAllProjects();
     return result;
   } catch (error) {
     console.error("Error getting projects for dropdown:", error);

@@ -57,7 +57,6 @@ export async function submitStarterTypes(
 
     // Create starter type using service
     const result = await StarterTypeService.createStarterType(starterTypeData);
-
     if (!result.success) {
       // Handle specific error types
       if (result.error === "Starter type name must be unique") {
