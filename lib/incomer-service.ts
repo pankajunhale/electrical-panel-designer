@@ -8,6 +8,16 @@ import { revalidatePath } from "next/cache";
 
 export class IncomerService {
   /**
+   * Convert Prisma incomer to DTO format
+   */
+  private convertToDto(incomer: any): IncomerDto {
+    return {
+      ...incomer,
+      ampereRating: incomer.ampereRating ? Number(incomer.ampereRating) : null,
+    };
+  }
+
+  /**
    * Create a new incomer
    */
   async create(data: CreateIncomerDto, userId: string): Promise<IncomerDto> {
@@ -20,7 +30,7 @@ export class IncomerService {
     });
 
     revalidatePath("/cp/incomers");
-    return incomer;
+    return this.convertToDto(incomer);
   }
 
   /**
@@ -49,7 +59,7 @@ export class IncomerService {
       orderBy: { createdAt: "desc" },
     });
 
-    return incomers;
+    return incomers.map((incomer) => this.convertToDto(incomer));
   }
 
   /**
@@ -63,7 +73,7 @@ export class IncomerService {
       },
     });
 
-    return incomer;
+    return incomer ? this.convertToDto(incomer) : null;
   }
 
   /**
@@ -78,7 +88,7 @@ export class IncomerService {
       orderBy: { createdAt: "desc" },
     });
 
-    return incomers;
+    return incomers.map((incomer) => this.convertToDto(incomer));
   }
 
   /**
@@ -99,7 +109,7 @@ export class IncomerService {
     });
 
     revalidatePath("/cp/incomers");
-    return incomer;
+    return this.convertToDto(incomer);
   }
 
   /**
@@ -116,7 +126,7 @@ export class IncomerService {
     });
 
     revalidatePath("/cp/incomers");
-    return incomer;
+    return this.convertToDto(incomer);
   }
 
   /**
@@ -128,7 +138,7 @@ export class IncomerService {
     });
 
     revalidatePath("/cp/incomers");
-    return incomer;
+    return this.convertToDto(incomer);
   }
 
   /**
@@ -145,7 +155,7 @@ export class IncomerService {
     });
 
     revalidatePath("/cp/incomers");
-    return incomer;
+    return this.convertToDto(incomer);
   }
 
   /**
