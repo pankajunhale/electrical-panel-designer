@@ -135,6 +135,25 @@ export class PanelDataImportService {
       const equipmentTypeBreakdown: { [equipmentType: string]: number } = {};
       const errors: string[] = [];
 
+      // Calculate total expected feeders across all panels
+      let totalExpectedFeeders = 0;
+      for (const [, equipmentItems] of panelGroups) {
+        for (const equipment of equipmentItems) {
+          if (
+            equipment.starterType &&
+            (equipment.ratingKw || equipment.ratingHp)
+          ) {
+            totalExpectedFeeders += equipment.quantity || 1;
+          }
+        }
+      }
+      console.log(
+        `Total expected feeders across all panels: ${totalExpectedFeeders}`
+      );
+
+      // Track total created feeders
+      let totalCreatedFeeders = 0;
+
       // Process each panel group
       for (const [panelName, equipmentItems] of panelGroups) {
         try {
@@ -163,7 +182,7 @@ export class PanelDataImportService {
 
           // Ensure unique serial numbers for each equipment item
           let serialNumberCounter = 1;
-
+          // TBD: main for loop
           for (const equipment of equipmentItems) {
             // Assign unique serial number
             equipment.serialNumber = serialNumberCounter++;
@@ -230,20 +249,28 @@ export class PanelDataImportService {
               equipmentTypeBreakdown[equipmentTypeName] =
                 (equipmentTypeBreakdown[equipmentTypeName] || 0) + 1;
 
-              // Step 6: Create feeder if it's motor equipment
+              // Step 6: Create feeders if it's motor equipment
               if (
                 equipment.starterType &&
                 (equipment.ratingKw || equipment.ratingHp)
               ) {
-                console.log(`Creating feeder for: ${equipment.description}`);
-                await this.createFeeder(
+                console.log(
+                  `Creating ${equipment.quantity || 1} feeder(s) for: ${
+                    equipment.description
+                  }`
+                );
+                const feeders = await this.createFeeder(
                   panel.record.id,
                   equipment,
                   starterType?.record.id,
                   feederType?.record.id,
                   breakerType?.record.id,
-                  user.id
+                  user.id,
+                  totalCreatedFeeders,
+                  totalExpectedFeeders
                 );
+                totalCreatedFeeders += feeders.length;
+                console.log(`Created ${feeders.length} feeder(s)`);
               }
 
               equipmentCreated++;
@@ -454,7 +481,9 @@ export class PanelDataImportService {
    * Extracts feeder/contactor rating information based on power rating
    * This method calculates typical incomer and contactor ratings based on motor power
    */
-  private static extractFeederContactorRatings(equipment: ProcessedEquipment): void {
+  private static extractFeederContactorRatings(
+    equipment: ProcessedEquipment
+  ): void {
     // Default values for control operation and wiring
     equipment.controlOperation = "Run Local+Rem";
     equipment.wiringMaterial = "Copper";
@@ -468,11 +497,13 @@ export class PanelDataImportService {
       const voltage = 415; // 3-phase voltage
       const powerFactor = 0.85;
       const efficiency = 0.9;
-      const incomerCurrent = (equipment.ratingKw * 1000) / (Math.sqrt(3) * voltage * powerFactor * efficiency);
-      
+      const incomerCurrent =
+        (equipment.ratingKw * 1000) /
+        (Math.sqrt(3) * voltage * powerFactor * efficiency);
+
       // Round to nearest standard rating
       equipment.incomerRating = this.roundToStandardRating(incomerCurrent);
-      
+
       // Contactor rating is typically 1.25 times the motor full load current
       const contactorCurrent = incomerCurrent * 1.25;
       equipment.contactorRating = this.roundToStandardRating(contactorCurrent);
@@ -480,15 +511,16 @@ export class PanelDataImportService {
       // Convert HP to KW for calculation
       const kwRating = equipment.ratingHp * 0.746;
       equipment.ratingKw = kwRating;
-      
+
       // Calculate ratings using the same method
       const voltage = 415;
       const powerFactor = 0.85;
       const efficiency = 0.9;
-      const incomerCurrent = (kwRating * 1000) / (Math.sqrt(3) * voltage * powerFactor * efficiency);
-      
+      const incomerCurrent =
+        (kwRating * 1000) / (Math.sqrt(3) * voltage * powerFactor * efficiency);
+
       equipment.incomerRating = this.roundToStandardRating(incomerCurrent);
-      
+
       const contactorCurrent = incomerCurrent * 1.25;
       equipment.contactorRating = this.roundToStandardRating(contactorCurrent);
     }
@@ -498,12 +530,15 @@ export class PanelDataImportService {
    * Rounds current rating to nearest standard rating
    */
   private static roundToStandardRating(current: number): number {
-    const standardRatings = [9, 12, 16, 18, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000];
-    
+    const standardRatings = [
+      9, 12, 16, 18, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400,
+      500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000,
+    ];
+
     // Find the closest standard rating
     let closest = standardRatings[0];
     let minDifference = Math.abs(current - closest);
-    
+
     for (const rating of standardRatings) {
       const difference = Math.abs(current - rating);
       if (difference < minDifference) {
@@ -511,7 +546,7 @@ export class PanelDataImportService {
         closest = rating;
       }
     }
-    
+
     return closest;
   }
 
@@ -824,58 +859,75 @@ export class PanelDataImportService {
     starterTypeId: string | undefined,
     feederTypeId: string | undefined,
     breakerTypeId: string | undefined,
-    userId: string
+    userId: string,
+    totalCreatedFeeders: number,
+    totalExpectedFeeders: number
   ) {
-    // Check if feeder already exists for this panel and description
-    const existingFeeder = await prisma.feeder.findFirst({
-      where: {
-        panelId,
-        description: equipment.description,
-      },
-    });
-
-    if (existingFeeder) {
-      // Update existing feeder
-      return await prisma.feeder.update({
-        where: { id: existingFeeder.id },
-        data: {
-          ratingKw: equipment.ratingKw || null,
-          ratingHp: equipment.ratingHp || null,
-          incomerRating: equipment.incomerRating || null,
-          contactorRating: equipment.contactorRating || null,
-          controlOperation: equipment.controlOperation || null,
-          wiringMaterial: equipment.wiringMaterial || null,
-          cablesBusBars: equipment.cablesBusBars || null,
-          quantity: equipment.quantity,
-          starterTypeId: starterTypeId || null,
-          feederTypeId: feederTypeId || null,
-          breakerTypeId: breakerTypeId || null,
-          updatedBy: userId,
-          version: { increment: 1 },
+    // Step 1: Remove all existing feeders for this panel to prevent duplicates
+    if (totalCreatedFeeders === 0) {
+      console.log(`Removing all existing feeders for panel ${panelId}`);
+      await prisma.feeder.deleteMany({
+        where: {
+          panelId: panelId,
         },
       });
-    } else {
-      // Create new feeder
-      return await prisma.feeder.create({
-        data: {
-          id: nanoid(),
-          panelId,
-          description: equipment.description,
-          ratingKw: equipment.ratingKw || null,
-          ratingHp: equipment.ratingHp || null,
-          incomerRating: equipment.incomerRating || null,
-          contactorRating: equipment.contactorRating || null,
-          controlOperation: equipment.controlOperation || null,
-          wiringMaterial: equipment.wiringMaterial || null,
-          cablesBusBars: equipment.cablesBusBars || null,
-          quantity: equipment.quantity,
-          starterTypeId: starterTypeId || null,
-          feederTypeId: feederTypeId || null,
-          breakerTypeId: breakerTypeId || null,
-          createdBy: userId,
-          version: 1,
-        },
-      });
+      console.log(`Removed all existing feeders for panel ${panelId}`);
     }
+
+    // Step 2: Create new feeders based on the quantity, but respect total limit
+    const quantity = equipment.quantity || 1;
+    const feeders: any[] = [];
+
+    // Calculate how many feeders we can still create
+    const remainingSlots = totalExpectedFeeders - totalCreatedFeeders;
+    const actualQuantity = Math.min(quantity, remainingSlots);
+
+    if (actualQuantity === 0) {
+      console.log(
+        `Skipping feeder creation for ${equipment.description} - limit reached`
+      );
+      return feeders;
+    }
+
+    console.log(
+      `Creating ${actualQuantity}/${quantity} feeders for equipment: ${equipment.description} (${remainingSlots} slots remaining)`
+    );
+
+    for (let i = 0; i < actualQuantity; i++) {
+      try {
+        const feeder = await prisma.feeder.create({
+          data: {
+            id: nanoid(),
+            panelId,
+            description: equipment.description,
+            ratingKw: equipment.ratingKw || null,
+            ratingHp: equipment.ratingHp || null,
+            incomerRating: equipment.incomerRating || null,
+            contactorRating: equipment.contactorRating || null,
+            controlOperation: equipment.controlOperation || null,
+            wiringMaterial: equipment.wiringMaterial || null,
+            cablesBusBars: equipment.cablesBusBars || null,
+            quantity: 1,
+            starterTypeId: starterTypeId || null,
+            feederTypeId: feederTypeId || null,
+            breakerTypeId: breakerTypeId || null,
+            createdBy: userId,
+            version: 1,
+          },
+        });
+        feeders.push(feeder);
+        console.log(
+          `Created feeder ${i + 1}/${actualQuantity}: Feeder No ${
+            totalCreatedFeeders + i + 1
+          }`
+        );
+      } catch (error) {
+        console.error(`Error creating feeder ${i + 1}:`, error);
+        throw error;
+      }
+    }
+
+    console.log(`Successfully created ${feeders.length} feeders`);
+    return feeders;
   }
 }

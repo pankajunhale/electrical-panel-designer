@@ -328,6 +328,7 @@ model Feeder {
   id            String   @id @default(uuid())
   panelId       String @map("panel_id")
   description   String?
+  shortDescription String? @map("short_description") @db.NVarChar(100)
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
   // Feeder/Contactor Rating Information
