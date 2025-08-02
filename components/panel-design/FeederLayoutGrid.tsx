@@ -19,6 +19,9 @@ import {
   Zap,
   Ruler,
   Info,
+  ArrowUpDown,
+  ArrowLeftRight,
+  Power,
 } from "lucide-react";
 
 // Grid unit in mm (1 grid unit = 300mm)
@@ -68,6 +71,8 @@ interface GALayoutItem {
 
 interface GridWidget extends GALayoutItem {
   id: string;
+  originalWidth?: number;
+  originalHeight?: number;
 }
 
 const EquipmentWidget = ({
@@ -83,8 +88,8 @@ const EquipmentWidget = ({
   let subtitle = "";
   const height = component.h * 60;
   const width = component.w * 8.33;
-  const actualWidth = component.w * GRID_UNIT_MM;
-  const actualHeight = component.h * GRID_UNIT_MM;
+  const actualWidth = component.originalWidth || component.w * GRID_UNIT_MM;
+  const actualHeight = component.originalHeight || component.h * GRID_UNIT_MM;
 
   switch (component.type) {
     case "HBB":
@@ -125,8 +130,35 @@ const EquipmentWidget = ({
     <div
       className={`${color} p-3 rounded border text-center h-full w-full flex flex-col justify-center relative`}
     >
-      <h3 className="font-bold text-sm mb-1">{title}</h3>
-      {subtitle && <p className="text-xs opacity-75">{subtitle}</p>}
+      {/* Icon for specific component types */}
+      {component.type === "HBB" && (
+        <div className="flex items-center justify-center gap-2">
+          <ArrowLeftRight className="w-4 h-4" />
+          <span className="font-bold text-xs">{title}</span>
+        </div>
+      )}
+      {component.type === "VBB" && (
+        <div className="flex justify-center">
+          <ArrowUpDown className="w-4 h-4" />
+        </div>
+      )}
+      {component.type === "incomer" && (
+        <div className="flex justify-center">
+          <Power className="w-4 h-4" />
+        </div>
+      )}
+
+      {component.type !== "HBB" && component.type !== "incomer" && (
+        <h3 className="font-bold text-[10px] mb-1">{title}</h3>
+      )}
+      {subtitle && component.type !== "feeder" && (
+        <p className="text-xs opacity-75">{subtitle}</p>
+      )}
+      {component.type === "feeder" && (
+        <p className="text-[10px] opacity-75">
+          {actualWidth}×{actualHeight}
+        </p>
+      )}
       {showDimensions && (
         <div className="absolute top-1 right-1 text-xs font-mono bg-black/20 text-white px-1 rounded">
           {component.w}×{component.h}
@@ -902,6 +934,8 @@ export function FeederLayoutGrid({
                 h: mmToGrid(feeder.layout.height),
                 label: feeder.description,
                 type: "feeder",
+                originalWidth: feeder.layout.width || 0,
+                originalHeight: feeder.layout.height || 0,
               };
 
               // Debug: Log feeder dimensions
