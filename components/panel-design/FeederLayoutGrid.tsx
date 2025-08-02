@@ -148,16 +148,27 @@ const EquipmentWidget = ({
         </div>
       )}
 
-      {component.type !== "HBB" && component.type !== "incomer" && (
-        <h3 className="font-bold text-[10px] mb-1">{title}</h3>
-      )}
+      {component.type !== "HBB" &&
+        component.type !== "incomer" &&
+        component.type !== "feeder" && (
+          <div className="overflow-hidden w-full">
+            <h3 className="font-bold text-[10px] mb-1 truncate w-full">
+              {title}
+            </h3>
+          </div>
+        )}
       {subtitle && component.type !== "feeder" && (
         <p className="text-xs opacity-75">{subtitle}</p>
       )}
       {component.type === "feeder" && (
-        <p className="text-[10px] opacity-75">
-          {actualWidth}×{actualHeight}
-        </p>
+        <div className="overflow-hidden w-full">
+          <h3 className="font-bold text-[10px] mb-1 truncate w-full">
+            {title}
+          </h3>
+          <p className="text-[10px] opacity-75 truncate w-full">
+            {actualWidth}×{actualHeight}
+          </p>
+        </div>
       )}
       {showDimensions && (
         <div className="absolute top-1 right-1 text-xs font-mono bg-black/20 text-white px-1 rounded">
@@ -554,6 +565,13 @@ export function FeederLayoutGrid({
 
   return (
     <div className="space-y-6">
+      <style jsx>{`
+        .truncate {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      `}</style>
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Panel Feeder Layout</h2>
         <div className="flex gap-2">
