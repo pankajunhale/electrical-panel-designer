@@ -198,6 +198,7 @@ export function FeederLayoutGrid({
   const [layoutItems, setLayoutItems] = useState<GridWidget[]>([]);
   const [showDimensions, setShowDimensions] = useState(false);
   const [showGridInfo, setShowGridInfo] = useState(false);
+  const [isUpdatingGrid, setIsUpdatingGrid] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const gridInstanceRef = useRef<GridStack | null>(null);
 
@@ -272,13 +273,9 @@ export function FeederLayoutGrid({
 
   // Add column functionality
   const addColumn = () => {
+    setIsUpdatingGrid(true);
     const newColumns = gridColumns + 1;
     setGridColumns(newColumns);
-
-    // Update grid instance
-    if (gridInstanceRef.current) {
-      gridInstanceRef.current.column(newColumns);
-    }
 
     // Update layout items that span full width
     setLayoutItems((prev) =>
@@ -295,19 +292,46 @@ export function FeederLayoutGrid({
         return item;
       })
     );
+
+    // Update GridStack instance
+    if (gridInstanceRef.current) {
+      gridInstanceRef.current.column(newColumns);
+
+      // Update existing widgets in the grid
+      const widgets = gridInstanceRef.current.getGridItems();
+      widgets.forEach((widget: any) => {
+        const el = widget.el;
+        const itemId =
+          el.getAttribute("gs-id") || el.getAttribute("data-gs-id");
+
+        // Update specific items that need to span full width
+        if (itemId === "hbb-top") {
+          widget.w = newColumns;
+          el.setAttribute("gs-w", newColumns.toString());
+        } else if (itemId === "incomers") {
+          widget.w = newColumns - 2;
+          el.setAttribute("gs-w", (newColumns - 2).toString());
+        } else if (itemId === "vbb-right") {
+          widget.x = newColumns - 1;
+          el.setAttribute("gs-x", (newColumns - 1).toString());
+        }
+      });
+
+      // Force grid to update
+      gridInstanceRef.current.compact();
+    }
+
+    // Reset updating state after a short delay
+    setTimeout(() => setIsUpdatingGrid(false), 500);
   };
 
   // Remove column functionality
   const removeColumn = () => {
     if (gridColumns <= 3) return; // Minimum 3 columns
 
+    setIsUpdatingGrid(true);
     const newColumns = gridColumns - 1;
     setGridColumns(newColumns);
-
-    // Update grid instance
-    if (gridInstanceRef.current) {
-      gridInstanceRef.current.column(newColumns);
-    }
 
     // Update layout items
     setLayoutItems((prev) =>
@@ -324,6 +348,37 @@ export function FeederLayoutGrid({
         return item;
       })
     );
+
+    // Update GridStack instance
+    if (gridInstanceRef.current) {
+      gridInstanceRef.current.column(newColumns);
+
+      // Update existing widgets in the grid
+      const widgets = gridInstanceRef.current.getGridItems();
+      widgets.forEach((widget: any) => {
+        const el = widget.el;
+        const itemId =
+          el.getAttribute("gs-id") || el.getAttribute("data-gs-id");
+
+        // Update specific items that need to span full width
+        if (itemId === "hbb-top") {
+          widget.w = newColumns;
+          el.setAttribute("gs-w", newColumns.toString());
+        } else if (itemId === "incomers") {
+          widget.w = newColumns - 2;
+          el.setAttribute("gs-w", (newColumns - 2).toString());
+        } else if (itemId === "vbb-right") {
+          widget.x = newColumns - 1;
+          el.setAttribute("gs-x", (newColumns - 1).toString());
+        }
+      });
+
+      // Force grid to update
+      gridInstanceRef.current.compact();
+    }
+
+    // Reset updating state after a short delay
+    setTimeout(() => setIsUpdatingGrid(false), 500);
   };
 
   // Add cable alley functionality
@@ -339,6 +394,30 @@ export function FeederLayoutGrid({
     };
 
     setLayoutItems((prev) => [...prev, newItem]);
+
+    // Add to GridStack instance if it exists
+    if (gridInstanceRef.current) {
+      const widget = gridInstanceRef.current.addWidget({
+        id: newItem.id,
+        x: newItem.x,
+        y: newItem.y,
+        w: newItem.w,
+        h: newItem.h,
+        content: `<div class="grid-stack-item-content h-full w-full">
+          <div class="bg-green-200 text-green-900 border border-green-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
+            <div class="flex justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div class="overflow-hidden w-full">
+              <h3 class="font-bold text-[10px] mb-1 truncate w-full">${newItem.label}</h3>
+            </div>
+            <p class="text-xs opacity-75">Cable Alley</p>
+          </div>
+        </div>`,
+      });
+    }
   };
 
   // Add vertical bus bar functionality
@@ -354,6 +433,30 @@ export function FeederLayoutGrid({
     };
 
     setLayoutItems((prev) => [...prev, newItem]);
+
+    // Add to GridStack instance if it exists
+    if (gridInstanceRef.current) {
+      const widget = gridInstanceRef.current.addWidget({
+        id: newItem.id,
+        x: newItem.x,
+        y: newItem.y,
+        w: newItem.w,
+        h: newItem.h,
+        content: `<div class="grid-stack-item-content h-full w-full">
+          <div class="bg-purple-200 text-purple-900 border border-purple-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
+            <div class="flex justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </div>
+            <div class="overflow-hidden w-full">
+              <h3 class="font-bold text-[10px] mb-1 truncate w-full">${newItem.label}</h3>
+            </div>
+            <p class="text-xs opacity-75">Vertical Bus Bar</p>
+          </div>
+        </div>`,
+      });
+    }
   };
 
   // Add top bus bar functionality
@@ -369,11 +472,47 @@ export function FeederLayoutGrid({
     };
 
     setLayoutItems((prev) => [...prev, newItem]);
+
+    // Add to GridStack instance if it exists
+    if (gridInstanceRef.current) {
+      const widget = gridInstanceRef.current.addWidget({
+        id: newItem.id,
+        x: newItem.x,
+        y: newItem.y,
+        w: newItem.w,
+        h: newItem.h,
+        content: `<div class="grid-stack-item-content h-full w-full">
+          <div class="bg-blue-200 text-blue-900 border border-blue-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
+            <div class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+              </svg>
+              <span class="font-bold text-xs">${newItem.label}</span>
+            </div>
+            <p class="text-xs opacity-75">Horizontal Bus Bar</p>
+          </div>
+        </div>`,
+      });
+    }
   };
 
   // Remove layout item
   const removeLayoutItem = (itemId: string) => {
     setLayoutItems((prev) => prev.filter((item) => item.id !== itemId));
+
+    // Remove from GridStack instance if it exists
+    if (gridInstanceRef.current) {
+      const widget = gridInstanceRef.current
+        .getGridItems()
+        .find(
+          (item: any) =>
+            item.id === itemId ||
+            (item as any).el?.getAttribute("gs-id") === itemId
+        );
+      if (widget) {
+        gridInstanceRef.current.removeWidget((widget as any).el);
+      }
+    }
   };
 
   // Calculate grid dimensions
@@ -441,12 +580,18 @@ export function FeederLayoutGrid({
       gridInstanceRef.current.destroy();
     }
 
-    // Only initialize if we have feeders
-    if (feeders.length === 0) {
+    // Only initialize if we have feeders or layout items
+    if (feeders.length === 0 && layoutItems.length === 0) {
       return;
     }
 
-    console.log("Initializing GridStack with", feeders.length, "feeders");
+    console.log(
+      "Initializing GridStack with",
+      feeders.length,
+      "feeders and",
+      layoutItems.length,
+      "layout items"
+    );
 
     // Initialize GridStack
     const grid = GridStack.init({
@@ -487,7 +632,13 @@ export function FeederLayoutGrid({
         gridInstanceRef.current.destroy();
       }
     };
-  }, [gridRef, gridColumns, feeders.length, onLayoutChange]);
+  }, [
+    gridRef,
+    gridColumns,
+    feeders.length,
+    layoutItems.length,
+    onLayoutChange,
+  ]);
 
   // Initialize default layout on mount
   useEffect(() => {
@@ -659,6 +810,7 @@ export function FeederLayoutGrid({
                   size="sm"
                   variant="outline"
                   className="flex-1"
+                  disabled={isUpdatingGrid}
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -667,11 +819,16 @@ export function FeederLayoutGrid({
                   size="sm"
                   variant="outline"
                   className="flex-1"
-                  disabled={gridColumns <= 3}
+                  disabled={gridColumns <= 3 || isUpdatingGrid}
                 >
                   <Minus className="h-3 w-3" />
                 </Button>
               </div>
+              {isUpdatingGrid && (
+                <div className="text-xs text-blue-600 animate-pulse">
+                  Updating grid...
+                </div>
+              )}
             </div>
 
             {/* Cable Alley Controls */}
@@ -839,7 +996,9 @@ export function FeederLayoutGrid({
           {/* Grid Container */}
           <div
             ref={gridRef}
-            className="grid-stack border-2 border-dashed relative"
+            className={`grid-stack border-2 border-dashed relative ${
+              isUpdatingGrid ? "opacity-75" : ""
+            }`}
             style={{
               backgroundImage: `
                    linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
@@ -849,6 +1008,18 @@ export function FeederLayoutGrid({
               height: panelDimensions.height,
             }}
           >
+            {isUpdatingGrid && (
+              <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center z-10">
+                <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm font-medium text-blue-600">
+                      Updating Grid Layout...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Grid Dimension Labels */}
             {showDimensions && (
               <>
@@ -910,11 +1081,7 @@ export function FeederLayoutGrid({
                 gs-h={item.h}
                 gs-x={item.x}
                 gs-y={item.y}
-                gs-no-resize={
-                  item.id.startsWith("hbb-") || item.type === "HBB"
-                    ? "true"
-                    : "false"
-                }
+                gs-no-resize="true"
                 gs-no-move={
                   item.id.startsWith("hbb-top") ||
                   item.id.startsWith("incomers")
@@ -978,6 +1145,7 @@ export function FeederLayoutGrid({
                   gs-h={widget.h}
                   gs-x={widget.x}
                   gs-y={widget.y}
+                  gs-no-resize="true"
                 >
                   <div className="grid-stack-item-content h-full w-full">
                     <EquipmentWidget
