@@ -35,6 +35,7 @@ import {
   Battery,
   RotateCcw,
 } from "lucide-react";
+import { FeederLayoutGrid } from "../panel-design/FeederLayoutGrid";
 
 interface Project {
   id: string;
@@ -151,7 +152,7 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
       const formData = new FormData();
       formData.append("tabularData", tabularData);
       formData.append("projectId", selectedProjectId);
-
+      // TBD Main
       const result = await importPanelEquipmentData(formData);
       setImportResult(result);
 
@@ -501,6 +502,7 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
               ]}
             />
           </CardContent>
+          <FeederLayoutGrid panelId={"KDiWq_fKzwfmxb1SNEcaI"} />
         </Card>
       )}
     </div>

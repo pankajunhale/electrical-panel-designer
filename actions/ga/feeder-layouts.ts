@@ -4,6 +4,7 @@ import {
   feederLayoutsSchema,
   type FeederLayoutsFormData,
 } from "@/schema/ga/feeder-layouts";
+import { createFeederLayout } from "@/actions/feeder-layout-data-import";
 
 type ActionState = {
   errors: Record<string, string[]>;
@@ -16,9 +17,7 @@ export async function submitFeederLayouts(
   formData: FormData
 ): Promise<ActionState> {
   const data = {
-    feeder_id: formData.get("feeder_id")
-      ? Number(formData.get("feeder_id"))
-      : undefined,
+    feeder_id: formData.get("feeder_id") as string,
     x: formData.get("x") ? Number(formData.get("x")) : undefined,
     y: formData.get("y") ? Number(formData.get("y")) : undefined,
     width: formData.get("width") ? Number(formData.get("width")) : undefined,
@@ -46,8 +45,23 @@ export async function submitFeederLayouts(
 
   const feederLayouts = validatedFields.data;
 
-  // Simulate success, skip database for now
-  console.log("Feeder layouts data:", feederLayouts);
+  // Create the feeder layout using the service
+  const result = await createFeederLayout({
+    feederId: feederLayouts.feeder_id!,
+    x: feederLayouts.x,
+    y: feederLayouts.y,
+    width: feederLayouts.width,
+    height: feederLayouts.height,
+    viewType: feederLayouts.view_type,
+  });
+
+  if (!result.success) {
+    return {
+      errors: {},
+      message: result.message,
+    };
+  }
+
   return {
     errors: {},
     message: "Feeder layout submitted successfully!",

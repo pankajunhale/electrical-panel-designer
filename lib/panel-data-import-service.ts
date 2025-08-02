@@ -863,9 +863,23 @@ export class PanelDataImportService {
     totalCreatedFeeders: number,
     totalExpectedFeeders: number
   ) {
-    // Step 1: Remove all existing feeders for this panel to prevent duplicates
+    // Step 1: Remove all existing feeders and their layouts for this panel to prevent duplicates
     if (totalCreatedFeeders === 0) {
-      console.log(`Removing all existing feeders for panel ${panelId}`);
+      console.log(
+        `Removing all existing feeders and layouts for panel ${panelId}`
+      );
+
+      // Delete feeder layouts first (due to foreign key constraint)
+      await prisma.feederLayout.deleteMany({
+        where: {
+          feeder: {
+            panelId: panelId,
+          },
+        },
+      });
+      console.log(`Removed all existing feeder layouts for panel ${panelId}`);
+
+      // Delete feeders
       await prisma.feeder.deleteMany({
         where: {
           panelId: panelId,
@@ -907,6 +921,8 @@ export class PanelDataImportService {
             controlOperation: equipment.controlOperation || null,
             wiringMaterial: equipment.wiringMaterial || null,
             cablesBusBars: equipment.cablesBusBars || null,
+            height: equipment.height || null, // Height in mm
+            width: equipment.width || null, // Width in mm
             quantity: 1,
             starterTypeId: starterTypeId || null,
             feederTypeId: feederTypeId || null,
@@ -928,6 +944,120 @@ export class PanelDataImportService {
     }
 
     console.log(`Successfully created ${feeders.length} feeders`);
+
+    // Create feeder layouts for each newly created feeder
+    for (const feeder of feeders) {
+      await this.createFeederLayout(feeder, userId);
+    }
+
     return feeders;
+  }
+
+  /**
+   * Create a feeder layout for the given feeder
+   * This will be used for gridstack.js rendering
+   */
+  private static async createFeederLayout(
+    feeder: any,
+    userId: string
+  ): Promise<void> {
+    try {
+      // Check if feeder layout already exists
+      const existingLayout = await prisma.feederLayout.findFirst({
+        where: {
+          feederId: feeder.id,
+          deletedAt: null,
+        },
+      });
+
+      if (existingLayout) {
+        console.log(`Feeder layout already exists for feeder ${feeder.id}`);
+        return;
+      }
+
+      // Get all existing feeders for this panel to calculate positioning
+      const panelFeeders = await prisma.feeder.findMany({
+        where: {
+          panelId: feeder.panelId,
+          deletedAt: null,
+        },
+        include: {
+          feederLayouts: {
+            where: {
+              deletedAt: null,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1, // Get the latest layout
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      // Calculate intelligent positioning based on electrical panel layout patterns
+      const position = this.calculateFeederPosition(panelFeeders, feeder);
+
+      // Create feeder layout with calculated position and actual dimensions
+      await prisma.feederLayout.create({
+        data: {
+          feederId: feeder.id,
+          x: position.x,
+          y: position.y,
+          width: feeder.width || 300, // Use feeder width or default 300mm
+          height: feeder.height || 200, // Use feeder height or default 200mm
+          viewType: "front", // Default view type
+          createdBy: userId,
+          version: 1,
+        },
+      });
+
+      console.log(
+        `Created feeder layout for feeder: ${feeder.description} at position (${position.x}, ${position.y})`
+      );
+    } catch (error) {
+      console.error(
+        `Error creating feeder layout for feeder ${feeder.id}:`,
+        error
+      );
+      // Don't throw error here to avoid breaking the main import process
+      // The layout can be created later if needed
+    }
+  }
+
+  /**
+   * Calculate intelligent positioning for feeders in electrical panel layout
+   * Based on standard electrical panel design patterns
+   */
+  private static calculateFeederPosition(
+    feeders: any[],
+    currentFeeder: any
+  ): { x: number; y: number } {
+    const gridWidth = 12; // GridStack uses 12-column grid
+    const feedersPerRow = 4; // Standard: 4 feeders per row
+    const feederWidth = 3; // Each feeder takes 3 grid units
+    const feederHeight = 2; // Each feeder takes 2 grid units
+
+    // Find the index of current feeder in the sorted list
+    const feederIndex = feeders.findIndex((f) => f.id === currentFeeder.id);
+
+    if (feederIndex === -1) {
+      return { x: 0, y: 0 }; // Fallback
+    }
+
+    // Calculate row and column position
+    const row = Math.floor(feederIndex / feedersPerRow);
+    const col = feederIndex % feedersPerRow;
+
+    // Calculate x position (in mm - 100mm per grid unit)
+    const x = col * feederWidth * 300;
+
+    // Calculate y position (in mm)
+    // Start at row 3 to leave space for HBB (row 0), VBB (row 1), and Incomers (row 2)
+    const y = (row + 3) * feederHeight * 300;
+
+    return { x, y };
   }
 }

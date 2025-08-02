@@ -337,6 +337,9 @@ model Feeder {
   controlOperation String? @map("control_operation") @db.NVarChar(100) // e.g., "Run Local+Rem"
   wiringMaterial String? @map("wiring_material") @db.NVarChar(50) // e.g., "Copper"
   cablesBusBars String? @map("cables_bus_bars") @db.NVarChar(50) // e.g., "Cable" or "BusBars"
+  // Physical dimensions in mm
+  height        Int? // Height in millimeters
+  width         Int? // Width in millimeters
   starterTypeId String? @map("starter_type_id")
   feederTypeId  String? @map("feeder_type_id")
   sourceTypeId  String? @map("source_type_id")
