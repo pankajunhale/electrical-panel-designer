@@ -222,94 +222,43 @@ export function FeederLayoutGrid({
     return groupedFeeders;
   };
 
-  // Calculate required columns based on panel dimensions and grouped feeders
-  const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
-    if (feeders.length === 0) return 6; // Default minimum
+  // Group feeders by height (1800mm limit per group)
+  const groupFeedersByHeight = (feeders: FeederWithLayout[]) => {
+    const MAX_HEIGHT_MM = 1800;
+    const groupedFeeders: FeederWithLayout[][] = [];
+    let currentGroup: FeederWithLayout[] = [];
+    let currentGroupHeight = 0;
 
-    // Panel dimensions (5000x2000mm)
-    const PANEL_WIDTH_MM = 5000;
-    const PANEL_HEIGHT_MM = 2000;
-    const CELL_SIZE_MM = 100; // Grid unit size
+    feeders.forEach((feeder) => {
+      const feederHeight = feeder.layout?.height || 300;
 
-    // Calculate maximum columns that can fit in panel width
-    const maxColumnsForPanel = Math.floor(PANEL_WIDTH_MM / CELL_SIZE_MM); // 5000/100 = 50 columns
-
-    const groupedFeeders = groupFeedersByWidth(feeders);
-    const MAX_HEIGHT_MM = 1800; // Maximum height per column
-    const VBB_WIDTH_MM = 300; // VBB width between groups
-
-    let totalColumns = 2; // Start with left and right VBB
-
-    // Sort groups by width (largest first for better layout)
-    const sortedGroups = Array.from(groupedFeeders.entries()).sort(
-      (a, b) => b[0] - a[0]
-    );
-
-    // Calculate columns needed for each width group
-    sortedGroups.forEach(([width, groupFeeders], groupIndex) => {
-      // Add VBB column before this group (except for first group)
-      if (groupIndex > 0) {
-        totalColumns += 1; // One VBB column (300mm width)
-      }
-
-      // Calculate how many columns this group needs based on 1800mm height limit
-      let currentColumnHeight = 0;
-      let columnsForThisGroup = 0;
-
-      groupFeeders.forEach((feeder) => {
-        const feederHeight = feeder.layout?.height || 300;
-        const feederHeightGrid = mmToGrid(feederHeight);
-
-        // Check if this feeder would exceed the 1800mm height limit
-        if (currentColumnHeight + feederHeightGrid > mmToGrid(MAX_HEIGHT_MM)) {
-          // Need a new column
-          columnsForThisGroup += 1;
-          currentColumnHeight = feederHeightGrid;
-        } else {
-          // Can fit in current column
-          currentColumnHeight += feederHeightGrid;
+      // Check if this feeder would exceed the 1800mm height limit
+      if (currentGroupHeight + feederHeight > MAX_HEIGHT_MM) {
+        // Start a new group
+        if (currentGroup.length > 0) {
+          groupedFeeders.push(currentGroup);
         }
-      });
-
-      // Add the last column for this group
-      if (columnsForThisGroup === 0) {
-        columnsForThisGroup = 1; // At least one column per group
+        currentGroup = [feeder];
+        currentGroupHeight = feederHeight;
       } else {
-        columnsForThisGroup += 1; // Add the last column
+        // Add to current group
+        currentGroup.push(feeder);
+        currentGroupHeight += feederHeight;
       }
-
-      totalColumns += columnsForThisGroup;
     });
 
-    // Use panel width to determine maximum columns, but ensure we have enough for all components
-    const requiredColumns = Math.max(
-      totalColumns,
-      Math.floor(PANEL_WIDTH_MM / CELL_SIZE_MM)
-    );
+    // Add the last group if it has feeders
+    if (currentGroup.length > 0) {
+      groupedFeeders.push(currentGroup);
+    }
 
-    // Cap at panel width maximum
-    const finalColumns = Math.min(maxColumnsForPanel, requiredColumns);
+    return groupedFeeders;
+  };
 
-    console.log("Column calculation for 5000x2000mm panel:", {
-      panelWidth: PANEL_WIDTH_MM,
-      panelHeight: PANEL_HEIGHT_MM,
-      maxColumnsForPanel,
-      totalFeeders: feeders.length,
-      groupCount: sortedGroups.length,
-      totalColumns,
-      requiredColumns,
-      finalColumns,
-      groups: sortedGroups.map(([width, feeders]) => ({
-        width: `${width}mm`,
-        count: feeders.length,
-        totalHeight: feeders.reduce(
-          (sum, f) => sum + (f.layout?.height || 300),
-          0
-        ),
-      })),
-    });
-
-    return finalColumns;
+  // Calculate required columns based on service calculation
+  const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
+    // Always use 50 columns for 2% cell width
+    return 50;
   };
 
   // Load feeders with layouts
@@ -429,21 +378,41 @@ export function FeederLayoutGrid({
     setLayoutItems(defaultItems);
   };
 
-  // Create feeder layout based on width groups with proper 1800mm height rules
+  // Create feeder layout based on height groups with proper 1800mm height rules
   const createFeederLayout = (feeders: FeederWithLayout[]) => {
-    const groupedFeeders = groupFeedersByWidth(feeders);
+    const groupedFeeders = groupFeedersByHeight(feeders);
     const feederWidgets: GridWidget[] = [];
 
     let currentX = 1; // Start after left VBB
     const MAX_HEIGHT_MM = 1800; // Maximum height per column
     const VBB_HEIGHT_MM = 1800; // VBB height
 
-    // Sort groups by width (largest first for better layout)
-    const sortedGroups = Array.from(groupedFeeders.entries()).sort(
-      (a, b) => b[0] - a[0]
+    // Sort groups by total height (largest first for better layout)
+    const sortedGroups = groupedFeeders
+      .map((group, index) => ({
+        index,
+        group,
+        totalHeight: group.reduce(
+          (sum, f) => sum + (f.layout?.height || 300),
+          0
+        ),
+      }))
+      .sort((a, b) => b.totalHeight - a.totalHeight);
+
+    console.log(
+      "Creating feeder layout for groups:",
+      sortedGroups.map((groupInfo) => ({
+        group: groupInfo.index + 1,
+        count: groupInfo.group.length,
+        totalHeight: groupInfo.totalHeight,
+      }))
     );
 
-    sortedGroups.forEach(([width, groupFeeders], groupIndex) => {
+    sortedGroups.forEach((groupInfo, groupIndex) => {
+      console.log(
+        `Processing group ${groupIndex}: ${groupInfo.totalHeight}mm total height, ${groupInfo.group.length} feeders`
+      );
+
       // Add VBB before this group (except for first group)
       if (groupIndex > 0) {
         feederWidgets.push({
@@ -456,46 +425,63 @@ export function FeederLayoutGrid({
           type: "VBB",
         });
         currentX += 1;
+        console.log(`Added VBB at x=${currentX - 1}`);
       }
+
+      // Each height group takes exactly one column (since they're grouped by 1800mm height limit)
+      const columnsForThisGroup = 1;
+      const groupColumnStarts: number[] = [currentX]; // Track column start positions
+
+      groupInfo.group.forEach(
+        (feeder: FeederWithLayout, feederIndex: number) => {
+          const feederHeight = feeder.layout?.height || 300;
+          const feederHeightGrid = mmToGrid(feederHeight);
+        }
+      );
+
+      console.log(
+        `Group ${groupIndex} needs ${columnsForThisGroup} columns, starting at x=${currentX}`
+      );
 
       // Position feeders in this group with proper height constraints
       let currentColumnHeight = 0;
-      let currentColumnX = currentX;
 
-      groupFeeders.forEach((feeder) => {
-        const feederHeight = feeder.layout?.height || 300;
-        const feederHeightGrid = mmToGrid(feederHeight);
+      groupInfo.group.forEach(
+        (feeder: FeederWithLayout, feederIndex: number) => {
+          const feederHeight = feeder.layout?.height || 300;
+          const feederHeightGrid = mmToGrid(feederHeight);
 
-        // Check if this feeder would exceed the 1800mm height limit
-        if (currentColumnHeight + feederHeightGrid > mmToGrid(MAX_HEIGHT_MM)) {
-          // Move to next column
-          currentColumnX += 1;
-          currentColumnHeight = 0;
+          const feederWidget: GridWidget = {
+            id: feeder.id,
+            x: currentX, // All feeders in the same group go in the same column
+            y: 1 + currentColumnHeight, // Position at current height in column
+            w: mmToGrid(feeder.layout?.width || 300),
+            h: feederHeightGrid,
+            label: feeder.description,
+            type: "feeder",
+            originalWidth: feeder.layout?.width || 300,
+            originalHeight: feederHeight,
+          };
+
+          feederWidgets.push(feederWidget);
+
+          console.log(
+            `Feeder ${feeder.description} at x=${feederWidget.x}, y=${feederWidget.y}, w=${feederWidget.w}, h=${feederWidget.h}`
+          );
+
+          // Update current column height
+          currentColumnHeight += feederHeightGrid;
         }
-
-        const feederWidget: GridWidget = {
-          id: feeder.id,
-          x: currentColumnX,
-          y: 1 + currentColumnHeight, // Position at current height in column
-          w: mmToGrid(feeder.layout?.width || 300),
-          h: feederHeightGrid,
-          label: feeder.description,
-          type: "feeder",
-          originalWidth: feeder.layout?.width || 300,
-          originalHeight: feederHeight,
-        };
-
-        feederWidgets.push(feederWidget);
-
-        // Update current column height
-        currentColumnHeight += feederHeightGrid;
-      });
+      );
 
       // Move to next group position (after all columns used for this group)
-      const columnsUsed = currentColumnX - currentX + 1;
-      currentX += columnsUsed;
+      currentX += columnsForThisGroup;
+      console.log(
+        `Group ${groupIndex} completed, next group starts at x=${currentX}`
+      );
     });
 
+    console.log(`Total feeder widgets created: ${feederWidgets.length}`);
     return feederWidgets;
   };
 
@@ -653,9 +639,9 @@ export function FeederLayoutGrid({
     const newItem: GridWidget = {
       id: `vbb-${Date.now()}`,
       x: x,
-      y: 1,
+      y: mmToGrid(100), // Start after top HBB
       w: 1,
-      h: 10,
+      h: mmToGrid(1800), // 1800mm height
       label: "VBB",
       type: "VBB",
     };
@@ -694,7 +680,7 @@ export function FeederLayoutGrid({
       x: 0,
       y: y,
       w: gridColumns,
-      h: 1,
+      h: mmToGrid(200), // 200mm height for other components
       label: "HBB",
       type: "HBB",
     };
