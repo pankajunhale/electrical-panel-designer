@@ -1028,35 +1028,225 @@ export class PanelDataImportService {
   }
 
   /**
+   * Group feeders by width for layout calculation
+   * Returns a map where key is width and value is array of feeders with that width
+   */
+  private static groupFeedersByWidth(feeders: any[]): Map<number, any[]> {
+    const groupedFeeders = new Map<number, any[]>();
+
+    feeders.forEach((feeder) => {
+      const width = feeder.width || 300; // Default to 300mm if width not specified
+      if (!groupedFeeders.has(width)) {
+        groupedFeeders.set(width, []);
+      }
+      groupedFeeders.get(width)!.push(feeder);
+    });
+
+    return groupedFeeders;
+  }
+
+  /**
+   * Calculate total cells required for panel layout
+   * Based on grouped feeders and layout rules
+   */
+  private static calculateTotalCells(feeders: any[]): {
+    totalCols: number;
+    totalRows: number;
+  } {
+    // Constants based on requirements - Must match GridStack GRID_UNIT_MM
+    const CELL_SIZE = 100; // Must match GRID_UNIT_MM in FeederLayoutGrid.tsx
+    const VBB_HEIGHT = 1800 + 250; // 2050 mm
+    const VBB_WIDTH = 300; // 300 mm for VBB/CBC between feeders
+    const HBB_HEIGHT = 300; // 300 mm for horizontal bus bar
+    const AVAILABLE_HEIGHT = 1800; // Available height for feeders (excluding HBB)
+
+    // Group feeders by width
+    const groupedFeeders = this.groupFeedersByWidth(feeders);
+
+    let totalCols = 0;
+    let maxRows = 0;
+
+    // Calculate columns and rows for each width group
+    groupedFeeders.forEach((groupFeeders, width) => {
+      // Calculate how many feeders can fit in the available height
+      const feederHeight = groupFeeders[0]?.height || 300; // Use first feeder's height as reference
+      const feedersPerColumn = Math.floor(AVAILABLE_HEIGHT / feederHeight);
+
+      // Calculate columns needed for this width group
+      // Each feeder takes its actual width in cells, plus VBB spacing
+      const feederWidthInCells = Math.ceil(width / CELL_SIZE);
+      const vbbWidthInCells = Math.ceil(VBB_WIDTH / CELL_SIZE);
+
+      const groupCols =
+        vbbWidthInCells + // Left VBB
+        groupFeeders.reduce((total, feeder) => {
+          const feederCellWidth = Math.ceil((feeder.width || 300) / CELL_SIZE);
+          return total + feederCellWidth;
+        }, 0) +
+        (groupFeeders.length - 1) * vbbWidthInCells + // VBBs between feeders
+        vbbWidthInCells; // Right VBB
+
+      totalCols += groupCols;
+
+      // Calculate rows needed for this group (feeders arranged in columns)
+      const columnsNeeded = Math.ceil(groupFeeders.length / feedersPerColumn);
+      const rowsNeeded = feedersPerColumn; // Each column has feedersPerColumn rows
+
+      maxRows = Math.max(maxRows, rowsNeeded);
+    });
+
+    // Add rows for HBB and spacing
+    const totalRows =
+      1 + // HBB row
+      maxRows + // Feeder rows
+      1; // Bottom spacing row
+
+    return { totalCols, totalRows };
+  }
+
+  /**
    * Calculate intelligent positioning for feeders in electrical panel layout
-   * Based on standard electrical panel design patterns
+   * Based on standard electrical panel design patterns with the following rules:
+   * - Cell size: 100 x 100 mm (matches GridStack GRID_UNIT_MM)
+   * - VBB height: 1800 mm
+   * - Group feeders by width
+   * - x:0, y:0 must be horizontal bus bar (HBB)
+   * - HBB width: total width of grouped feeders
+   * - First and last column will always be VBB of 300mm
+   * - VBBs only between different width groups (not between individual feeders)
+   * - 1800mm height limit per column
    */
   private static calculateFeederPosition(
     feeders: any[],
     currentFeeder: any
   ): { x: number; y: number } {
-    const gridWidth = 12; // GridStack uses 12-column grid
-    const feedersPerRow = 4; // Standard: 4 feeders per row
-    const feederWidth = 3; // Each feeder takes 3 grid units
-    const feederHeight = 2; // Each feeder takes 2 grid units
+    // Constants based on requirements - Must match GridStack GRID_UNIT_MM
+    const CELL_SIZE = 100; // Must match GRID_UNIT_MM in FeederLayoutGrid.tsx
+    const VBB_HEIGHT = 1800; // 1800 mm
+    const VBB_WIDTH = 300; // 300 mm for VBB
+    const HBB_HEIGHT = 300; // 300 mm for horizontal bus bar
+    const MAX_HEIGHT_MM = 1800; // Maximum height per column
 
-    // Find the index of current feeder in the sorted list
-    const feederIndex = feeders.findIndex((f) => f.id === currentFeeder.id);
+    // Group feeders by width
+    const groupedFeeders = this.groupFeedersByWidth(feeders);
 
-    if (feederIndex === -1) {
-      return { x: 0, y: 0 }; // Fallback
+    // Find the width group of the current feeder
+    const currentFeederWidth = currentFeeder.width || 300;
+    const currentGroup = groupedFeeders.get(currentFeederWidth);
+
+    if (!currentGroup) {
+      return { x: 0, y: HBB_HEIGHT }; // Fallback position
     }
 
-    // Calculate row and column position
-    const row = Math.floor(feederIndex / feedersPerRow);
-    const col = feederIndex % feedersPerRow;
+    // Find position of current feeder within its group
+    const feederIndexInGroup = currentGroup.findIndex(
+      (f) => f.id === currentFeeder.id
+    );
+    if (feederIndexInGroup === -1) {
+      return { x: 0, y: HBB_HEIGHT }; // Fallback position
+    }
 
-    // Calculate x position (in mm - 100mm per grid unit)
-    const x = col * feederWidth * 300;
+    // Calculate x position based on width groups and column distribution
+    let xInCells = 1; // Start after left VBB (column 0 is left VBB)
 
-    // Calculate y position (in mm)
-    // Start at row 3 to leave space for HBB (row 0), VBB (row 1), and Incomers (row 2)
-    const y = (row + 3) * feederHeight * 300;
+    // Add offset for previous width groups
+    const sortedGroups = Array.from(groupedFeeders.entries()).sort(
+      (a, b) => b[0] - a[0]
+    );
+
+    let currentGroupIndex = -1;
+    for (let i = 0; i < sortedGroups.length; i++) {
+      if (sortedGroups[i][0] === currentFeederWidth) {
+        currentGroupIndex = i;
+        break;
+      }
+      // Add VBB column between groups (except for first group)
+      if (i > 0) {
+        xInCells += 1; // VBB column
+      }
+
+      // Calculate columns needed for this group based on 1800mm height limit
+      const groupFeeders = sortedGroups[i][1];
+      let currentColumnHeight = 0;
+      let columnsForThisGroup = 0;
+
+      groupFeeders.forEach((feeder) => {
+        const feederHeight = feeder.height || 300;
+        const feederHeightGrid = Math.ceil(feederHeight / CELL_SIZE);
+
+        if (
+          currentColumnHeight + feederHeightGrid >
+          Math.ceil(MAX_HEIGHT_MM / CELL_SIZE)
+        ) {
+          columnsForThisGroup += 1;
+          currentColumnHeight = feederHeightGrid;
+        } else {
+          currentColumnHeight += feederHeightGrid;
+        }
+      });
+
+      // Add the last column for this group
+      if (columnsForThisGroup === 0) {
+        columnsForThisGroup = 1;
+      } else {
+        columnsForThisGroup += 1;
+      }
+
+      xInCells += columnsForThisGroup;
+    }
+
+    // Add VBB column before current group (except for first group)
+    if (currentGroupIndex > 0) {
+      xInCells += 1; // VBB column
+    }
+
+    // Calculate which column this feeder belongs to within its group
+    const feederHeight = currentFeeder.height || 300;
+    let currentColumnHeight = 0;
+    let columnIndexInGroup = 0;
+
+    for (let i = 0; i < feederIndexInGroup; i++) {
+      const prevFeederHeight = currentGroup[i].height || 300;
+      const prevFeederHeightGrid = Math.ceil(prevFeederHeight / CELL_SIZE);
+
+      if (
+        currentColumnHeight + prevFeederHeightGrid >
+        Math.ceil(MAX_HEIGHT_MM / CELL_SIZE)
+      ) {
+        columnIndexInGroup += 1;
+        currentColumnHeight = prevFeederHeightGrid;
+      } else {
+        currentColumnHeight += prevFeederHeightGrid;
+      }
+    }
+
+    // Add column offset for this feeder
+    xInCells += columnIndexInGroup;
+
+    // Calculate y position within the column
+    let rowIndexInColumn = 0;
+    currentColumnHeight = 0;
+
+    for (let i = 0; i < feederIndexInGroup; i++) {
+      const prevFeederHeight = currentGroup[i].height || 300;
+      const prevFeederHeightGrid = Math.ceil(prevFeederHeight / CELL_SIZE);
+
+      if (
+        currentColumnHeight + prevFeederHeightGrid >
+        Math.ceil(MAX_HEIGHT_MM / CELL_SIZE)
+      ) {
+        // This feeder is in a new column, reset row index
+        rowIndexInColumn = 0;
+        currentColumnHeight = prevFeederHeightGrid;
+      } else {
+        rowIndexInColumn += 1;
+        currentColumnHeight += prevFeederHeightGrid;
+      }
+    }
+
+    // Convert to mm
+    const x = xInCells * CELL_SIZE;
+    const y = HBB_HEIGHT + rowIndexInColumn * feederHeight + 50; // 50mm spacing after HBB
 
     return { x, y };
   }

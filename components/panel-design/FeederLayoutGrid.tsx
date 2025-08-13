@@ -24,10 +24,13 @@ import {
   Power,
 } from "lucide-react";
 
-// Grid unit in mm (1 grid unit = 300mm)
-const GRID_UNIT_MM = 300;
+// Grid unit in mm (1 grid unit = 100mm for calculations)
+const GRID_UNIT_MM = 100;
 
-// Convert mm to grid units (1 grid unit = 300mm)
+// Visual cell size in mm (how cells appear in UI)
+const VISUAL_CELL_SIZE_MM = 100;
+
+// Convert mm to grid units (1 grid unit = 100mm)
 const mmToGrid = (mm: number | null | undefined) => {
   if (!mm) return 1;
   return Math.max(1, Math.ceil(mm / GRID_UNIT_MM));
@@ -88,8 +91,10 @@ const EquipmentWidget = ({
   let subtitle = "";
   const height = component.h * 60;
   const width = component.w * 8.33;
-  const actualWidth = component.originalWidth || component.w * GRID_UNIT_MM;
-  const actualHeight = component.originalHeight || component.h * GRID_UNIT_MM;
+  const actualWidth =
+    component.originalWidth || component.w * VISUAL_CELL_SIZE_MM;
+  const actualHeight =
+    component.originalHeight || component.h * VISUAL_CELL_SIZE_MM;
 
   switch (component.type) {
     case "HBB":
@@ -194,13 +199,118 @@ export function FeederLayoutGrid({
   const [feeders, setFeeders] = useState<FeederWithLayout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [gridColumns, setGridColumns] = useState(12);
+  const [gridColumns, setGridColumns] = useState(6); // Will be updated based on feeder data
   const [layoutItems, setLayoutItems] = useState<GridWidget[]>([]);
   const [showDimensions, setShowDimensions] = useState(false);
   const [showGridInfo, setShowGridInfo] = useState(false);
   const [isUpdatingGrid, setIsUpdatingGrid] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const gridInstanceRef = useRef<GridStack | null>(null);
+
+  // Group feeders by width for layout calculation
+  const groupFeedersByWidth = (feeders: FeederWithLayout[]) => {
+    const groupedFeeders = new Map<number, FeederWithLayout[]>();
+
+    feeders.forEach((feeder) => {
+      const width = feeder.layout?.width || 300; // Default to 300mm if width not specified
+      if (!groupedFeeders.has(width)) {
+        groupedFeeders.set(width, []);
+      }
+      groupedFeeders.get(width)!.push(feeder);
+    });
+
+    return groupedFeeders;
+  };
+
+  // Calculate required columns based on panel dimensions and grouped feeders
+  const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
+    if (feeders.length === 0) return 6; // Default minimum
+
+    // Panel dimensions (5000x2000mm)
+    const PANEL_WIDTH_MM = 5000;
+    const PANEL_HEIGHT_MM = 2000;
+    const CELL_SIZE_MM = 100; // Grid unit size
+
+    // Calculate maximum columns that can fit in panel width
+    const maxColumnsForPanel = Math.floor(PANEL_WIDTH_MM / CELL_SIZE_MM); // 5000/100 = 50 columns
+
+    const groupedFeeders = groupFeedersByWidth(feeders);
+    const MAX_HEIGHT_MM = 1800; // Maximum height per column
+    const VBB_WIDTH_MM = 300; // VBB width between groups
+
+    let totalColumns = 2; // Start with left and right VBB
+
+    // Sort groups by width (largest first for better layout)
+    const sortedGroups = Array.from(groupedFeeders.entries()).sort(
+      (a, b) => b[0] - a[0]
+    );
+
+    // Calculate columns needed for each width group
+    sortedGroups.forEach(([width, groupFeeders], groupIndex) => {
+      // Add VBB column before this group (except for first group)
+      if (groupIndex > 0) {
+        totalColumns += 1; // One VBB column (300mm width)
+      }
+
+      // Calculate how many columns this group needs based on 1800mm height limit
+      let currentColumnHeight = 0;
+      let columnsForThisGroup = 0;
+
+      groupFeeders.forEach((feeder) => {
+        const feederHeight = feeder.layout?.height || 300;
+        const feederHeightGrid = mmToGrid(feederHeight);
+
+        // Check if this feeder would exceed the 1800mm height limit
+        if (currentColumnHeight + feederHeightGrid > mmToGrid(MAX_HEIGHT_MM)) {
+          // Need a new column
+          columnsForThisGroup += 1;
+          currentColumnHeight = feederHeightGrid;
+        } else {
+          // Can fit in current column
+          currentColumnHeight += feederHeightGrid;
+        }
+      });
+
+      // Add the last column for this group
+      if (columnsForThisGroup === 0) {
+        columnsForThisGroup = 1; // At least one column per group
+      } else {
+        columnsForThisGroup += 1; // Add the last column
+      }
+
+      totalColumns += columnsForThisGroup;
+    });
+
+    // Use panel width to determine maximum columns, but ensure we have enough for all components
+    const requiredColumns = Math.max(
+      totalColumns,
+      Math.floor(PANEL_WIDTH_MM / CELL_SIZE_MM)
+    );
+
+    // Cap at panel width maximum
+    const finalColumns = Math.min(maxColumnsForPanel, requiredColumns);
+
+    console.log("Column calculation for 5000x2000mm panel:", {
+      panelWidth: PANEL_WIDTH_MM,
+      panelHeight: PANEL_HEIGHT_MM,
+      maxColumnsForPanel,
+      totalFeeders: feeders.length,
+      groupCount: sortedGroups.length,
+      totalColumns,
+      requiredColumns,
+      finalColumns,
+      groups: sortedGroups.map(([width, feeders]) => ({
+        width: `${width}mm`,
+        count: feeders.length,
+        totalHeight: feeders.reduce(
+          (sum, f) => sum + (f.layout?.height || 300),
+          0
+        ),
+      })),
+    });
+
+    return finalColumns;
+  };
 
   // Load feeders with layouts
   const loadFeeders = async () => {
@@ -212,6 +322,64 @@ export function FeederLayoutGrid({
 
       if (result.success && result.data) {
         setFeeders(result.data);
+
+        // Calculate and update grid columns based on feeder data
+        const requiredColumns = calculateRequiredColumns(result.data);
+        setGridColumns(requiredColumns);
+
+        // Create proper feeder layout based on width groups
+        const feederWidgets = createFeederLayout(result.data);
+
+        // Update layout items with feeders
+        const defaultItems = [
+          // Horizontal Bus Bar (Top) - spans full width
+          {
+            id: "hbb-top",
+            x: 0,
+            y: 0,
+            w: requiredColumns,
+            h: 1,
+            label: "HBB",
+            type: "HBB",
+          },
+          // Vertical Bus Bar (Left)
+          {
+            id: "vbb-left",
+            x: 0,
+            y: 1,
+            w: 1,
+            h: 10,
+            label: "VBB",
+            type: "VBB",
+          },
+          // Vertical Bus Bar (Right)
+          {
+            id: "vbb-right",
+            x: requiredColumns - 1,
+            y: 1,
+            w: 1,
+            h: 10,
+            label: "VBB",
+            type: "VBB",
+          },
+        ];
+
+        setLayoutItems([...defaultItems, ...feederWidgets]);
+
+        // Debug: Log grouping information
+        const groupedFeeders = groupFeedersByWidth(result.data);
+        console.log("Feeder grouping:", {
+          totalFeeders: result.data.length,
+          groups: Array.from(groupedFeeders.entries()).map(
+            ([width, feeders]) => ({
+              width: `${width}mm`,
+              count: feeders.length,
+              feeders: feeders.map((f) => f.description),
+            })
+          ),
+          calculatedColumns: requiredColumns,
+          feederWidgets: feederWidgets.length,
+        });
       } else {
         setError(result.message);
       }
@@ -226,7 +394,7 @@ export function FeederLayoutGrid({
   // Initialize default layout items
   const initializeDefaultLayout = () => {
     const defaultItems: GridWidget[] = [
-      // Horizontal Bus Bar (Top)
+      // Horizontal Bus Bar (Top) - spans full width
       {
         id: "hbb-top",
         x: 0,
@@ -256,19 +424,79 @@ export function FeederLayoutGrid({
         label: "VBB",
         type: "VBB",
       },
-      // Incomers
-      {
-        id: "incomers",
-        x: 1,
-        y: 1,
-        w: gridColumns - 2,
-        h: 2,
-        label: "Incomers",
-        type: "incomer",
-      },
     ];
 
     setLayoutItems(defaultItems);
+  };
+
+  // Create feeder layout based on width groups with proper 1800mm height rules
+  const createFeederLayout = (feeders: FeederWithLayout[]) => {
+    const groupedFeeders = groupFeedersByWidth(feeders);
+    const feederWidgets: GridWidget[] = [];
+
+    let currentX = 1; // Start after left VBB
+    const MAX_HEIGHT_MM = 1800; // Maximum height per column
+    const VBB_HEIGHT_MM = 1800; // VBB height
+
+    // Sort groups by width (largest first for better layout)
+    const sortedGroups = Array.from(groupedFeeders.entries()).sort(
+      (a, b) => b[0] - a[0]
+    );
+
+    sortedGroups.forEach(([width, groupFeeders], groupIndex) => {
+      // Add VBB before this group (except for first group)
+      if (groupIndex > 0) {
+        feederWidgets.push({
+          id: `vbb-group-${groupIndex}`,
+          x: currentX,
+          y: 1,
+          w: 1,
+          h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
+          label: "VBB",
+          type: "VBB",
+        });
+        currentX += 1;
+      }
+
+      // Position feeders in this group with proper height constraints
+      let currentColumnHeight = 0;
+      let currentColumnX = currentX;
+
+      groupFeeders.forEach((feeder) => {
+        const feederHeight = feeder.layout?.height || 300;
+        const feederHeightGrid = mmToGrid(feederHeight);
+
+        // Check if this feeder would exceed the 1800mm height limit
+        if (currentColumnHeight + feederHeightGrid > mmToGrid(MAX_HEIGHT_MM)) {
+          // Move to next column
+          currentColumnX += 1;
+          currentColumnHeight = 0;
+        }
+
+        const feederWidget: GridWidget = {
+          id: feeder.id,
+          x: currentColumnX,
+          y: 1 + currentColumnHeight, // Position at current height in column
+          w: mmToGrid(feeder.layout?.width || 300),
+          h: feederHeightGrid,
+          label: feeder.description,
+          type: "feeder",
+          originalWidth: feeder.layout?.width || 300,
+          originalHeight: feederHeight,
+        };
+
+        feederWidgets.push(feederWidget);
+
+        // Update current column height
+        currentColumnHeight += feederHeightGrid;
+      });
+
+      // Move to next group position (after all columns used for this group)
+      const columnsUsed = currentColumnX - currentX + 1;
+      currentX += columnsUsed;
+    });
+
+    return feederWidgets;
   };
 
   // Add column functionality
@@ -517,14 +745,15 @@ export function FeederLayoutGrid({
 
   // Calculate grid dimensions
   const getGridDimensions = () => {
-    const totalWidth = gridColumns * 8.33; // 8.33% per column
+    const cellWidthPercent = 100 / gridColumns; // Dynamic cell width based on columns
+    const totalWidth = gridColumns * cellWidthPercent; // Should equal 100%
     const totalHeight = 10 * 60; // 10 rows * 60px
     return {
       width: `${totalWidth}%`,
       height: `${totalHeight}px`,
       columns: gridColumns,
       rows: 10,
-      cellWidth: `${8.33}%`,
+      cellWidth: `${cellWidthPercent}%`,
       cellHeight: "60px",
     };
   };
@@ -535,39 +764,33 @@ export function FeederLayoutGrid({
       return getGridDimensions();
     }
 
-    // Find the maximum extent of all feeders
-    let maxX = 0;
-    let maxY = 0;
+    // Use the calculated grid columns from feeder data
+    const requiredColumns = gridColumns; // This is already calculated based on feeder data
+    const requiredRows = Math.max(10, Math.ceil(feeders.length / 6)); // 6 feeders per column max
+    const cellWidthPercent = 100 / requiredColumns; // Dynamic cell width
+
+    // Find the maximum feeder dimensions for reference
     let maxWidth = 0;
     let maxHeight = 0;
 
     feeders.forEach((feeder) => {
       if (feeder.layout) {
-        const x = mmToGrid(feeder.layout.x);
-        const y = mmToGrid(feeder.layout.y);
         const w = mmToGrid(feeder.layout.width);
         const h = mmToGrid(feeder.layout.height);
-
-        maxX = Math.max(maxX, x + w);
-        maxY = Math.max(maxY, y + h);
         maxWidth = Math.max(maxWidth, w);
         maxHeight = Math.max(maxHeight, h);
       }
     });
 
-    // Calculate required rows and columns
-    const requiredColumns = Math.max(gridColumns, maxX);
-    const requiredRows = Math.max(10, maxY);
-
     return {
-      width: `${requiredColumns * 8.33}%`,
+      width: `${requiredColumns * cellWidthPercent}%`,
       height: `${requiredRows * 60}px`,
       columns: requiredColumns,
       rows: requiredRows,
-      cellWidth: `${8.33}%`,
+      cellWidth: `${cellWidthPercent}%`,
       cellHeight: "60px",
-      maxFeederWidth: maxWidth * GRID_UNIT_MM,
-      maxFeederHeight: maxHeight * GRID_UNIT_MM,
+      maxFeederWidth: maxWidth * VISUAL_CELL_SIZE_MM,
+      maxFeederHeight: maxHeight * VISUAL_CELL_SIZE_MM,
     };
   };
 
@@ -616,10 +839,10 @@ export function FeederLayoutGrid({
     grid.on("change", (event: any, items: any[]) => {
       const layouts = items.map((item: any) => ({
         feederId: item.id,
-        x: item.x * GRID_UNIT_MM, // Convert grid units back to mm
-        y: item.y * GRID_UNIT_MM,
-        width: item.w * GRID_UNIT_MM,
-        height: item.h * GRID_UNIT_MM,
+        x: item.x * VISUAL_CELL_SIZE_MM, // Convert grid units back to mm using visual size
+        y: item.y * VISUAL_CELL_SIZE_MM,
+        width: item.w * VISUAL_CELL_SIZE_MM,
+        height: item.h * VISUAL_CELL_SIZE_MM,
       }));
 
       if (onLayoutChange) {
@@ -1065,7 +1288,7 @@ export function FeederLayoutGrid({
                         justifyContent: "center",
                       }}
                     >
-                      {GRID_UNIT_MM}×{GRID_UNIT_MM}
+                      {VISUAL_CELL_SIZE_MM}×{VISUAL_CELL_SIZE_MM}
                     </div>
                   ))
                 )}
@@ -1099,64 +1322,7 @@ export function FeederLayoutGrid({
               </div>
             ))}
 
-            {/* Feeders - Dynamic Grid Items */}
-            {feeders.map((feeder, index) => {
-              if (!feeder.layout) return null;
-
-              // Debug the layout values
-              console.log(`Feeder ${feeder.description} layout:`, {
-                x: feeder.layout.x,
-                y: feeder.layout.y,
-                width: feeder.layout.width,
-                height: feeder.layout.height,
-              });
-
-              const widget = {
-                id: feeder.id,
-                x: mmToGrid(feeder.layout.x),
-                y: mmToGrid(feeder.layout.y),
-                w: mmToGrid(feeder.layout.width),
-                h: mmToGrid(feeder.layout.height),
-                label: feeder.description,
-                type: "feeder",
-                originalWidth: feeder.layout.width || 0,
-                originalHeight: feeder.layout.height || 0,
-              };
-
-              // Debug: Log feeder dimensions
-              console.log(`Feeder ${feeder.description}:`, {
-                original: {
-                  x: feeder.layout.x,
-                  y: feeder.layout.y,
-                  width: feeder.layout.width,
-                  height: feeder.layout.height,
-                },
-                grid: { x: widget.x, y: widget.y, w: widget.w, h: widget.h },
-                calculated: {
-                  width: widget.w * GRID_UNIT_MM,
-                  height: widget.h * GRID_UNIT_MM,
-                },
-              });
-              return (
-                <div
-                  key={feeder.id}
-                  className="grid-stack-item"
-                  gs-w={widget.w}
-                  gs-h={widget.h}
-                  gs-x={widget.x}
-                  gs-y={widget.y}
-                  gs-no-resize="true"
-                >
-                  <div className="grid-stack-item-content h-full w-full">
-                    <EquipmentWidget
-                      component={widget}
-                      isResize={true}
-                      showDimensions={showDimensions}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+            {/* Feeders are now handled through layoutItems */}
           </div>
 
           {/* Feeders List */}
