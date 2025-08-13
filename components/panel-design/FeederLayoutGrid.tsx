@@ -199,7 +199,7 @@ export function FeederLayoutGrid({
   const [feeders, setFeeders] = useState<FeederWithLayout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [gridColumns, setGridColumns] = useState(6); // Will be updated based on feeder data
+  const [gridColumns, setGridColumns] = useState(12); // Will be updated based on feeder data
   const [layoutItems, setLayoutItems] = useState<GridWidget[]>([]);
   const [showDimensions, setShowDimensions] = useState(false);
   const [showGridInfo, setShowGridInfo] = useState(false);
@@ -251,14 +251,14 @@ export function FeederLayoutGrid({
     if (currentGroup.length > 0) {
       groupedFeeders.push(currentGroup);
     }
-
+    console.table(groupedFeeders);
     return groupedFeeders;
   };
 
   // Calculate required columns based on service calculation
   const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
     // Always use 50 columns for 2% cell width
-    return 50;
+    return 60;
   };
 
   // Load feeders with layouts
@@ -296,8 +296,8 @@ export function FeederLayoutGrid({
             id: "vbb-left",
             x: 0,
             y: 1,
-            w: 1,
-            h: 10,
+            w: 3,
+            h: 18,
             label: "VBB",
             type: "VBB",
           },
@@ -306,8 +306,8 @@ export function FeederLayoutGrid({
             id: "vbb-right",
             x: requiredColumns - 1,
             y: 1,
-            w: 1,
-            h: 10,
+            w: 3,
+            h: 18,
             label: "VBB",
             type: "VBB",
           },
@@ -359,7 +359,7 @@ export function FeederLayoutGrid({
         x: 0,
         y: 1,
         w: 1,
-        h: 10,
+        h: 18,
         label: "VBB",
         type: "VBB",
       },
@@ -369,7 +369,7 @@ export function FeederLayoutGrid({
         x: gridColumns - 1,
         y: 1,
         w: 1,
-        h: 10,
+        h: 18,
         label: "VBB",
         type: "VBB",
       },
@@ -419,7 +419,7 @@ export function FeederLayoutGrid({
           id: `vbb-group-${groupIndex}`,
           x: currentX,
           y: 1,
-          w: 1,
+          w: 3,
           h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
           label: "VBB",
           type: "VBB",
@@ -602,7 +602,7 @@ export function FeederLayoutGrid({
       x: position === "left" ? 1 : gridColumns - 2,
       y: 3,
       w: 1,
-      h: 6,
+      h: 18,
       label: "Cable Alley",
       type: "CABLE_ALLEY",
     };
@@ -618,7 +618,7 @@ export function FeederLayoutGrid({
         w: newItem.w,
         h: newItem.h,
         content: `<div class="grid-stack-item-content h-full w-full">
-          <div class="bg-green-200 text-green-900 border border-green-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
+          <div class="bg-green-200 text-green-900  border-green-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
             <div class="flex justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -657,7 +657,7 @@ export function FeederLayoutGrid({
         w: newItem.w,
         h: newItem.h,
         content: `<div class="grid-stack-item-content h-full w-full">
-          <div class="bg-purple-200 text-purple-900 border border-purple-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
+          <div class="bg-purple-200 text-purple-900  border-purple-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
             <div class="flex justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
@@ -696,8 +696,8 @@ export function FeederLayoutGrid({
         w: newItem.w,
         h: newItem.h,
         content: `<div class="grid-stack-item-content h-full w-full">
-          <div class="bg-blue-200 text-blue-900 border border-blue-400 p-3 rounded border text-center h-full w-full flex flex-col justify-center relative">
-            <div class="flex items-center justify-center gap-2">
+          <div class="bg-blue-200 text-blue-900  border-blue-400 p-0 rounded border text-center h-full w-full flex flex-col justify-center relative">
+            <div class="flex items-center justify-center gap-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
               </svg>
@@ -738,7 +738,7 @@ export function FeederLayoutGrid({
       width: `${totalWidth}%`,
       height: `${totalHeight}px`,
       columns: gridColumns,
-      rows: 10,
+      rows: 24,
       cellWidth: `${cellWidthPercent}%`,
       cellHeight: "60px",
     };
