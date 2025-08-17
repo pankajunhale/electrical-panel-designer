@@ -87,8 +87,8 @@ const EquipmentWidget = ({
   showDimensions?: boolean;
 }) => {
   let color = "bg-gray-200 text-gray-800 border-gray-400";
-  //const title = component.label;
-  const title = `${component.x}×${component.y}`;
+  const title = component.label;
+  //const title = `${component.x}×${component.y}`;
   let subtitle = "";
   const height = component.h * 60;
   const width = component.w * 8.33;
@@ -104,7 +104,7 @@ const EquipmentWidget = ({
       break;
     case "VBB":
       color = "bg-purple-200 text-purple-900 border-purple-400";
-      subtitle = "Vertical Bus Bar";
+      subtitle = "VBB";
       break;
     case "CABLE_ALLEY":
       color = "bg-green-200 text-green-900 border-green-400";
@@ -134,18 +134,18 @@ const EquipmentWidget = ({
 
   return (
     <div
-      className={`${color} p-3 rounded border text-center h-full w-full flex flex-col justify-center relative`}
+      className={`${color} p-3 rounded border text-center h-full w-full flex flex-col justify-center items-center relative`}
     >
       {/* Icon for specific component types */}
       {component.type === "HBB" && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-4">
           <ArrowLeftRight className="w-4 h-4" />
           <span className="font-bold text-xs">{title}</span>
         </div>
       )}
       {component.type === "VBB" && (
-        <div className="flex justify-center w-full">
-          <ArrowUpDown className="w-4 h-4" />
+        <div className="flex justify-center items-center w-full">
+          <ArrowUpDown className="w-10 h-10" />
         </div>
       )}
       {component.type === "incomer" && (
@@ -168,10 +168,8 @@ const EquipmentWidget = ({
       )}
       {component.type === "feeder" && (
         <div className="overflow-hidden w-full">
-          <h3 className="font-bold text-[10px] mb-1 truncate w-full">
-            {title}
-          </h3>
-          <p className="text-[10px] opacity-75 truncate w-full">
+          <h3 className="font-bold text-[10px] mb-1 w-full">{title}</h3>
+          <p className="text-[10px] opacity-75 w-full">
             {actualWidth}×{actualHeight}
           </p>
         </div>
@@ -340,7 +338,7 @@ export function FeederLayoutGrid({
             y: 1,
             w: 3,
             h: 18,
-            label: "VBB",
+            label: "",
             type: "VBB",
           },
           // Vertical Bus Bar (Right)
@@ -350,7 +348,7 @@ export function FeederLayoutGrid({
             y: 1,
             w: 3,
             h: 18,
-            label: "VBB",
+            label: "",
             type: "VBB",
           },
         ];
@@ -402,7 +400,7 @@ export function FeederLayoutGrid({
         y: 1,
         w: 1,
         h: 18,
-        label: "VBB",
+        label: "",
         type: "VBB",
       },
       // Vertical Bus Bar (Right)
@@ -412,7 +410,7 @@ export function FeederLayoutGrid({
         y: 1,
         w: 1,
         h: 18,
-        label: "VBB",
+        label: "",
         type: "VBB",
       },
     ];
@@ -517,7 +515,7 @@ export function FeederLayoutGrid({
               y: 1,
               w: mmToGrid(VBB_WIDTH_MM), // 300mm width = 3 grid units
               h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
-              label: "VBB",
+              label: "",
               type: "VBB",
             };
           }
@@ -1387,7 +1385,11 @@ export function FeederLayoutGrid({
                     : "false"
                 }
               >
-                <div className="grid-stack-item-content h-full w-full">
+                <div
+                  className={`${
+                    item.type !== "HBB" ? "grid-stack-item-content" : ""
+                  } w-full`}
+                >
                   <EquipmentWidget
                     component={item}
                     isResize={true}
