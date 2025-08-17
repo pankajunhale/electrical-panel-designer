@@ -205,7 +205,7 @@ export function FeederLayoutGrid({
   const [isUpdatingGrid, setIsUpdatingGrid] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const gridInstanceRef = useRef<GridStack | null>(null);
-
+  const [isAddBottomBusBar, setIsAddBottomBusBar] = useState(false);
   // Group feeders by width for layout calculation
   const groupFeedersByWidth = (feeders: FeederWithLayout[]) => {
     const groupedFeeders = new Map<number, FeederWithLayout[]>();
@@ -257,7 +257,6 @@ export function FeederLayoutGrid({
   // Calculate required columns based on service calculation
   const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
     // Group feeders by height (1800mm limit per group)
-    debugger;
     const groupedFeeders = groupFeedersByHeight(feeders);
     const totalGroups = Array.from(groupedFeeders.keys()).length;
 
@@ -302,11 +301,11 @@ export function FeederLayoutGrid({
   };
 
   // Load feeders with layouts
-  const loadFeeders = async () => {
+  const loadFeeders = async (isAddBottomBusBar: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
-
+      const VBB_HEIGHT_MM = 1800;
       const result = await getFeedersWithLayoutsByPanelId(panelId);
 
       if (result.success && result.data) {
@@ -353,7 +352,23 @@ export function FeederLayoutGrid({
           },
         ];
 
-        setLayoutItems([...defaultItems, ...feederWidgets]);
+        if (isAddBottomBusBar) {
+          // Horizontal Bus Bar (Bottom) - spans full width
+          const bottomBusBar = [
+            {
+              id: "hbb-bottom",
+              x: 0,
+              y: mmToGrid(VBB_HEIGHT_MM) + 1,
+              w: requiredColumns,
+              h: 1,
+              label: "HBB",
+              type: "HBB",
+            },
+          ];
+          setLayoutItems([...defaultItems, ...bottomBusBar, ...feederWidgets]);
+        } else {
+          setLayoutItems([...defaultItems, ...feederWidgets]);
+        }
 
         // Debug: Log grouping information
         const groupedFeeders = groupFeedersByWidth(result.data);
@@ -378,44 +393,6 @@ export function FeederLayoutGrid({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Initialize default layout items
-  const initializeDefaultLayout = () => {
-    const defaultItems: GridWidget[] = [
-      // Horizontal Bus Bar (Top) - spans full width
-      {
-        id: "hbb-top",
-        x: 0,
-        y: 0,
-        w: gridColumns,
-        h: 1,
-        label: "HBB",
-        type: "HBB",
-      },
-      // Vertical Bus Bar (Left)
-      {
-        id: "vbb-left",
-        x: 0,
-        y: 1,
-        w: 1,
-        h: 18,
-        label: "",
-        type: "VBB",
-      },
-      // Vertical Bus Bar (Right)
-      {
-        id: "vbb-right",
-        x: gridColumns - 1,
-        y: 1,
-        w: 1,
-        h: 18,
-        label: "",
-        type: "VBB",
-      },
-    ];
-
-    setLayoutItems(defaultItems);
   };
 
   // Create feeder layout based on height groups with proper 1800mm height rules
@@ -761,40 +738,9 @@ export function FeederLayoutGrid({
   };
 
   // Add top bus bar functionality
-  const addTopBusBar = (y: number) => {
-    const newItem: GridWidget = {
-      id: `hbb-${Date.now()}`,
-      x: 0,
-      y: y,
-      w: gridColumns,
-      h: mmToGrid(200), // 200mm height for other components
-      label: "HBB",
-      type: "HBB",
-    };
-
-    setLayoutItems((prev) => [...prev, newItem]);
-
-    // Add to GridStack instance if it exists
-    if (gridInstanceRef.current) {
-      const widget = gridInstanceRef.current.addWidget({
-        id: newItem.id,
-        x: newItem.x,
-        y: newItem.y,
-        w: newItem.w,
-        h: newItem.h,
-        content: `<div class="grid-stack-item-content h-full w-full">
-          <div class="bg-blue-200 text-blue-900  border-blue-400 p-0 rounded border text-center h-full w-full flex flex-col justify-center relative">
-            <div class="flex items-center justify-center gap-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-              </svg>
-              <span class="font-bold text-xs">${newItem.label}</span>
-            </div>
-            <p class="text-xs opacity-75">Horizontal Bus Bar</p>
-          </div>
-        </div>`,
-      });
-    }
+  const manageBottomBusBarHandler = async (isAddBottomBusBar: boolean) => {
+    setIsAddBottomBusBar(isAddBottomBusBar);
+    await loadFeeders(isAddBottomBusBar);
   };
 
   // Remove layout item
@@ -936,11 +882,6 @@ export function FeederLayoutGrid({
     onLayoutChange,
   ]);
 
-  // Initialize default layout on mount
-  useEffect(() => {
-    initializeDefaultLayout();
-  }, []);
-
   // Load feeders on mount
   useEffect(() => {
     loadFeeders();
@@ -999,7 +940,7 @@ export function FeederLayoutGrid({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <Button onClick={loadFeeders} variant="outline">
+          <Button onClick={() => loadFeeders()} variant="outline">
             Retry
           </Button>
         </CardContent>
@@ -1038,7 +979,7 @@ export function FeederLayoutGrid({
             <Info className="h-3 w-3 mr-1" />
             Grid Info
           </Button>
-          <Button onClick={loadFeeders} variant="outline" size="sm">
+          <Button onClick={() => loadFeeders()} variant="outline" size="sm">
             Refresh
           </Button>
           <Button onClick={handleSaveLayout} size="sm">
@@ -1183,24 +1124,27 @@ export function FeederLayoutGrid({
             <div className="space-y-2">
               <h4 className="text-xs font-medium">Top Bus Bar</h4>
               <div className="flex gap-1">
-                <Button
-                  onClick={() => addTopBusBar(4)}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Zap className="h-3 w-3" />
-                  Add
-                </Button>
-                <Button
-                  onClick={() => addTopBusBar(6)}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Zap className="h-3 w-3" />
-                  Bottom
-                </Button>
+                {!isAddBottomBusBar ? (
+                  <Button
+                    onClick={() => manageBottomBusBarHandler(true)}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Zap className="h-3 w-3" />
+                    Add
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => manageBottomBusBarHandler(false)}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Zap className="h-3 w-3" />
+                    Remove
+                  </Button>
+                )}
               </div>
             </div>
           </div>
