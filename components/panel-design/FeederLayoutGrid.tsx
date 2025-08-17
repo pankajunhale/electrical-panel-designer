@@ -144,7 +144,7 @@ const EquipmentWidget = ({
         </div>
       )}
       {component.type === "VBB" && (
-        <div className="flex justify-center">
+        <div className="flex justify-center w-full">
           <ArrowUpDown className="w-4 h-4" />
         </div>
       )}
@@ -259,8 +259,9 @@ export function FeederLayoutGrid({
   // Calculate required columns based on service calculation
   const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
     // Group feeders by height (1800mm limit per group)
+    debugger;
     const groupedFeeders = groupFeedersByHeight(feeders);
-    const totalGroups = groupedFeeders.length;
+    const totalGroups = Array.from(groupedFeeders.keys()).length;
 
     // VBB dimensions
     const VBB_WIDTH_MM = 300;
@@ -268,15 +269,22 @@ export function FeederLayoutGrid({
 
     // Calculate total columns needed:
     // - Feeders total: 1 column per feeder (46 feeders = 46 columns)
-    const feederColumns = feeders.length;
-
+    let feederColumns = 0; // feeders.length;
+    groupedFeeders.forEach((group) => {
+      group.forEach((feeder, index) => {
+        if (index === 0 && feeder.layout?.width) {
+          feederColumns += mmToGrid(feeder.layout?.width);
+        }
+      });
+    });
     // - Internal VBBs: between groups → (totalGroups - 1) internal VBBs × 3 cols
     const internalVBBColumns = (totalGroups - 1) * VBB_WIDTH_GRID;
 
     // - Left & Right VBBs = 6 cols (3 cols each) - these are already in default layout
     const sideVBBColumns = 6;
 
-    const totalColumns = feederColumns + internalVBBColumns + sideVBBColumns;
+    const totalColumns =
+      feederColumns + internalVBBColumns + sideVBBColumns + 0;
 
     console.log(
       `Calculated columns: ${totalGroups} groups, ${totalColumns} total columns needed`
@@ -421,6 +429,7 @@ export function FeederLayoutGrid({
     console.log(`Initial currentX set to: ${currentX} (after left VBB)`);
     const MAX_HEIGHT_MM = 1800; // Maximum height per column
     const VBB_HEIGHT_MM = 1800; // VBB height
+    const VBB_WIDTH_MM = 300; // VBB width
     const TOTAL_COLUMNS = calculateRequiredColumns(feeders); // Dynamically calculate columns
 
     // Sort groups by total height (largest first for better layout)
@@ -506,7 +515,7 @@ export function FeederLayoutGrid({
               id: `vbb-group-${groupIndex}`,
               x: feederX + feederWidth,
               y: 1,
-              w: 3, // 300mm width = 3 grid units
+              w: mmToGrid(VBB_WIDTH_MM), // 300mm width = 3 grid units
               h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
               label: "VBB",
               type: "VBB",
@@ -553,7 +562,9 @@ export function FeederLayoutGrid({
       // Move to next group position (after all columns used for this group + VBB)
       const previousX = currentX;
       currentX +=
-        columnsForThisGroup + (groupIndex < sortedGroups.length - 1 ? 3 : 0); // Add VBB width if not last group
+        columnsForThisGroup +
+        (groupIndex < sortedGroups.length - 1 ? 3 : 0) -
+        3; // Add VBB width if not last group
       console.log(
         `Group ${groupIndex} completed, x incremented from ${previousX} to ${currentX}`
       );
