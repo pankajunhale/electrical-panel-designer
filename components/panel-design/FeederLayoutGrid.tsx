@@ -482,21 +482,41 @@ export function FeederLayoutGrid({
       // Position feeders in this group with proper height constraints
       let currentColumnHeight = 0;
       let currentColumnInGroup = 0;
-
+      let feederWidth = 0;
+      let vbbObj: GridWidget = {
+        id: "",
+        x: 0,
+        y: 0,
+        w: 0,
+        h: 0,
+        label: "",
+        type: "",
+      };
       groupInfo.group.forEach(
         (feeder: FeederWithLayout, feederIndex: number) => {
           const feederHeight = feeder.layout?.height || 300;
           const feederHeightGrid = mmToGrid(feederHeight);
-
+          const feederWidth = mmToGrid(feeder.layout?.width || 300);
           // Distribute feeders across multiple columns within the group
           const feederX =
             groupStartX + (currentColumnInGroup % columnsForThisGroup);
-
+          // vbb widget
+          if (feederIndex === 0) {
+            vbbObj = {
+              id: `vbb-group-${groupIndex}`,
+              x: feederX + feederWidth,
+              y: 1,
+              w: 3, // 300mm width = 3 grid units
+              h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
+              label: "VBB",
+              type: "VBB",
+            };
+          }
           const feederWidget: GridWidget = {
             id: feeder.id,
             x: feederX, // Distribute feeders across multiple columns
             y: 1 + currentColumnHeight, // Position at current height in column
-            w: mmToGrid(feeder.layout?.width || 300),
+            w: feederWidth,
             h: feederHeightGrid,
             label: feeder.description,
             type: "feeder",
@@ -523,16 +543,8 @@ export function FeederLayoutGrid({
       // Add VBB after this group's feeders (except for last group)
       if (groupIndex < sortedGroups.length - 1) {
         // VBB goes after the feeder columns for this group
-        const vbbX = groupStartX + columnsForThisGroup; // VBB goes after the feeder columns
-        feederWidgets.push({
-          id: `vbb-group-${groupIndex}`,
-          x: vbbX,
-          y: 1,
-          w: 3, // 300mm width = 3 grid units
-          h: mmToGrid(VBB_HEIGHT_MM), // Convert 1800mm to grid units
-          label: "VBB",
-          type: "VBB",
-        });
+        const vbbX = groupStartX + feederWidth; // VBB goes after the feeder columns
+        feederWidgets.push(vbbObj);
         console.log(
           `Added VBB at x=${vbbX}, y=1, w=3, h=${mmToGrid(VBB_HEIGHT_MM)}`
         );
