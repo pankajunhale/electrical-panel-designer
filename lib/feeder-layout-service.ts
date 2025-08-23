@@ -297,7 +297,20 @@ export class FeederLayoutService {
         panelId,
         deletedAt: null,
       },
-      include: {
+      select: {
+        id: true,
+        description: true,
+        ratingKw: true,
+        ratingHp: true,
+        incomerRating: true,
+        contactorRating: true,
+        controlOperation: true,
+        wiringMaterial: true,
+        cablesBusBars: true,
+        quantity: true,
+        starterTypeId: true,
+        feederTypeId: true,
+        breakerTypeId: true,
         feederLayouts: {
           where: {
             deletedAt: null,
