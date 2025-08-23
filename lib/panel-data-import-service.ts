@@ -71,7 +71,21 @@ export class PanelDataImportService {
     METERING: "Metering Equipment",
     POWER_SUPPLY: "Power Supply",
     CONTROL_SWITCH: "Control Switch",
+    INCOMER: "Incomer",
   };
+
+  // Equipment types that should be treated as incomers (not feeders)
+  private static readonly INCOMER_TYPE_CODES = [
+    "INCOMER",
+    "MAIN_INCOMER",
+    "INCOMER_BREAKER",
+    "MAIN_BREAKER",
+    "MAIN",
+    "MAIN_SWITCH",
+    "MAIN_ACB",
+    "MAIN_MCCB",
+    "ACB", // ACB is always considered as incomer
+  ];
 
   private static readonly STARTER_PATTERNS = {
     DOL: "Direct Online Starter",
@@ -90,6 +104,46 @@ export class PanelDataImportService {
     MPCB: "Motor Protection Circuit Breaker",
     MCB: "Miniature Circuit Breaker",
   };
+
+  /**
+   * Checks if the given equipment should be treated as an incomer (not a feeder)
+   */
+  private static isIncomer(equipment: ProcessedEquipment): boolean {
+    // Check by type code
+    if (
+      equipment.typeCode &&
+      this.INCOMER_TYPE_CODES.includes(equipment.typeCode.toUpperCase())
+    ) {
+      console.log(
+        `  Equipment identified as incomer by type code: ${equipment.typeCode}`
+      );
+      return true;
+    }
+
+    // Check by description (case insensitive)
+    if (equipment.description) {
+      const description = equipment.description.toLowerCase();
+      if (
+        description.includes("incomer") ||
+        description.includes("main breaker") ||
+        description.includes("main incomer") ||
+        description.includes("main switch") ||
+        description.includes("main acb") ||
+        description.includes("main mccb") ||
+        description.includes("acb") // ACB in description is always considered as incomer
+      ) {
+        console.log(
+          `  Equipment identified as incomer by description: ${equipment.description}`
+        );
+        return true;
+      }
+    }
+
+    console.log(
+      `  Equipment is NOT an incomer: ${equipment.description} (Type: ${equipment.typeCode})`
+    );
+    return false;
+  }
 
   /**
    * Main import function - processes tabular data and imports into database
@@ -139,10 +193,8 @@ export class PanelDataImportService {
       let totalExpectedFeeders = 0;
       for (const [, equipmentItems] of panelGroups) {
         for (const equipment of equipmentItems) {
-          if (
-            equipment.starterType &&
-            (equipment.ratingKw || equipment.ratingHp)
-          ) {
+          // Create feeders for all equipment except incomers
+          if (!this.isIncomer(equipment)) {
             totalExpectedFeeders += equipment.quantity || 1;
           }
         }
@@ -249,11 +301,12 @@ export class PanelDataImportService {
               equipmentTypeBreakdown[equipmentTypeName] =
                 (equipmentTypeBreakdown[equipmentTypeName] || 0) + 1;
 
-              // Step 6: Create feeders if it's motor equipment
-              if (
-                equipment.starterType &&
-                (equipment.ratingKw || equipment.ratingHp)
-              ) {
+              // Step 6: Create feeders for all equipment except incomers
+              // This includes motors, control equipment, breakers, transformers, etc.
+              console.log(
+                `Checking if equipment is incomer: ${equipment.description} (Type: ${equipment.typeCode})`
+              );
+              if (!this.isIncomer(equipment)) {
                 console.log(
                   `Creating ${equipment.quantity || 1} feeder(s) for: ${
                     equipment.description
@@ -271,6 +324,10 @@ export class PanelDataImportService {
                 );
                 totalCreatedFeeders += feeders.length;
                 console.log(`Created ${feeders.length} feeder(s)`);
+              } else {
+                console.log(
+                  `Skipping feeder creation for incomer: ${equipment.description}`
+                );
               }
 
               equipmentCreated++;

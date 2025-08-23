@@ -281,6 +281,7 @@ export class FeederLayoutService {
       quantity: number | null;
       starterTypeId?: string | null;
       feederTypeId?: string | null;
+      feederTypeName?: string | null;
       breakerTypeId?: string | null;
       layout: {
         id: string;
@@ -311,6 +312,11 @@ export class FeederLayoutService {
         starterTypeId: true,
         feederTypeId: true,
         breakerTypeId: true,
+        feederType: {
+          select: {
+            name: true,
+          },
+        },
         feederLayouts: {
           where: {
             deletedAt: null,
@@ -345,6 +351,7 @@ export class FeederLayoutService {
       quantity: feeder.quantity,
       starterTypeId: feeder.starterTypeId,
       feederTypeId: feeder.feederTypeId,
+      feederTypeName: feeder.feederType?.name || null,
       breakerTypeId: feeder.breakerTypeId,
       layout: feeder.feederLayouts[0] || null,
     }));
