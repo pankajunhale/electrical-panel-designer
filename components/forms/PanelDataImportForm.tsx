@@ -31,7 +31,7 @@ import {
   Gauge,
   Power,
   Shield,
-  Cpu,
+  // Cpu, // Removed as it's not currently used
   Battery,
   RotateCcw,
 } from "lucide-react";
@@ -85,6 +85,7 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [validationResult, setValidationResult] = useState<any>(null);
   const [importResult, setImportResult] = useState<ImportActionResult | null>(
     null
@@ -92,6 +93,7 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
   const [selectedEquipmentType, setSelectedEquipmentType] = useState<
     string | null
   >(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [importedEquipmentData, setImportedEquipmentData] = useState<any[]>([]);
 
   const sampleData = `slno	panelname	item	subqty	typecode	height	width

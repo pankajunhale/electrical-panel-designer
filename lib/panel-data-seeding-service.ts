@@ -428,7 +428,9 @@ export class PanelDataSeedingService {
    */
   private static async createPanels(
     data: PanelEquipmentInput[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     projects: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     locations: any[],
     userId: string
   ) {
@@ -510,9 +512,13 @@ export class PanelDataSeedingService {
    */
   private static async createFeeders(
     data: PanelEquipmentInput[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     panels: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     starterTypes: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     feederTypes: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     breakerTypes: any[],
     userId: string
   ) {
@@ -584,6 +590,7 @@ export class PanelDataSeedingService {
    * Create Feeder Layouts
    */
   private static async createFeederLayouts(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     feeders: any[],
     data: PanelEquipmentInput[],
     userId: string
@@ -623,8 +630,11 @@ export class PanelDataSeedingService {
    */
   private static async createEquipmentData(
     data: PanelEquipmentInput[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     panels: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     equipmentTypes: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     starterTypes: any[],
     userId: string
   ) {

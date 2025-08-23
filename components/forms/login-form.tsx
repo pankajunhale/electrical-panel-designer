@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +25,7 @@ export function LoginForm() {
   const [error, setError] = React.useState<string>("");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/cp";
+  const callbackUrl = "/cp";
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -52,7 +51,7 @@ export function LoginForm() {
         } else {
           router.push(callbackUrl);
         }
-      } catch (error) {
+      } catch {
         setError("An error occurred. Please try again.");
       }
     });

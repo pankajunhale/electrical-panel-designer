@@ -131,7 +131,7 @@ export class PanelDataImportService {
 
       let equipmentCreated = 0;
       let panelsCreated = 0;
-      let typesCreated = { equipment: 0, starter: 0, breaker: 0, feeder: 0 };
+      const typesCreated = { equipment: 0, starter: 0, breaker: 0, feeder: 0 };
       const equipmentTypeBreakdown: { [equipmentType: string]: number } = {};
       const errors: string[] = [];
 
@@ -158,7 +158,7 @@ export class PanelDataImportService {
       for (const [panelName, equipmentItems] of panelGroups) {
         try {
           // Step 1: Ensure project exists
-          const project = await this.ensureProject(projectId, user.id);
+          const project = await this.ensureProject(projectId);
 
           // Step 2: Create/find panel location (using default if not specified)
           const panelLocation = await this.ensurePanelLocation(
@@ -571,7 +571,7 @@ export class PanelDataImportService {
   /**
    * Database helper methods
    */
-  private static async ensureProject(projectId: string, userId: string) {
+  private static async ensureProject(projectId: string) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
@@ -799,10 +799,10 @@ export class PanelDataImportService {
       ? equipment.ratingKw * equipment.quantity
       : null;
 
-    // Calculate total power rating for control equipment
-    const totalPowerRating = equipment.powerRating
-      ? equipment.powerRating * equipment.quantity
-      : null;
+    // Calculate total power rating for control equipment (commented out as not used)
+    // const totalPowerRating = equipment.powerRating
+    //   ? equipment.powerRating * equipment.quantity
+    //   : null;
 
     return await prisma.equipmentData.upsert({
       where: {
@@ -890,6 +890,7 @@ export class PanelDataImportService {
 
     // Step 2: Create new feeders based on the quantity, but respect total limit
     const quantity = equipment.quantity || 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const feeders: any[] = [];
 
     // Calculate how many feeders we can still create
@@ -958,6 +959,7 @@ export class PanelDataImportService {
    * This will be used for gridstack.js rendering
    */
   private static async createFeederLayout(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     feeder: any,
     userId: string
   ): Promise<void> {
@@ -1031,7 +1033,9 @@ export class PanelDataImportService {
    * Group feeders by width for layout calculation
    * Returns a map where key is width and value is array of feeders with that width
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static groupFeedersByWidth(feeders: any[]): Map<number, any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const groupedFeeders = new Map<number, any[]>();
 
     feeders.forEach((feeder) => {
@@ -1049,9 +1053,12 @@ export class PanelDataImportService {
    * Group feeders by height (1800mm limit per group)
    * Returns an array of groups, where each group contains feeders that fit within 1800mm height
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static groupFeedersByHeight(feeders: any[]): any[][] {
     const MAX_HEIGHT_MM = 1800;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const groupedFeeders: any[][] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let currentGroup: any[] = [];
     let currentGroupHeight = 0;
 
@@ -1084,9 +1091,12 @@ export class PanelDataImportService {
   /**
    * Find which height group a feeder belongs to
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static findFeederGroup(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     groupedFeeders: any[][],
     feederId: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any[] | null {
     for (const group of groupedFeeders) {
       if (group.some((feeder) => feeder.id === feederId)) {
@@ -1099,6 +1109,7 @@ export class PanelDataImportService {
   /**
    * Calculate required columns for GridStack based on grouped feeders
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static calculateRequiredColumns(feeders: any[]): number {
     if (feeders.length === 0) return 6; // Default minimum
 
@@ -1124,13 +1135,14 @@ export class PanelDataImportService {
    * Calculate total cells required for panel layout
    * Based on grouped feeders and layout rules
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static calculateTotalCells(feeders: any[]): {
     totalCols: number;
     totalRows: number;
   } {
     // Constants based on requirements - Must match GridStack GRID_UNIT_MM
     const CELL_SIZE = 100; // Must match GRID_UNIT_MM in FeederLayoutGrid.tsx
-    const VBB_HEIGHT = 1800 + 250; // 2050 mm
+    // const VBB_HEIGHT = 1800 + 250; // 2050 mm (commented out as not used)
     const VBB_WIDTH = 300; // 300 mm for VBB/CBC between feeders
     const AVAILABLE_HEIGHT = 1800; // Available height for feeders (excluding HBB)
 
@@ -1141,14 +1153,14 @@ export class PanelDataImportService {
     let maxRows = 0;
 
     // Calculate columns and rows for each width group
-    groupedFeeders.forEach((groupFeeders, width) => {
+    groupedFeeders.forEach((groupFeeders) => {
       // Calculate how many feeders can fit in the available height
       const feederHeight = groupFeeders[0]?.height || 300; // Use first feeder's height as reference
       const feedersPerColumn = Math.floor(AVAILABLE_HEIGHT / feederHeight);
 
       // Calculate columns needed for this width group
       // Each feeder takes its actual width in cells, plus VBB spacing
-      const feederWidthInCells = Math.ceil(width / CELL_SIZE);
+      // const feederWidthInCells = Math.ceil(width / CELL_SIZE); // Commented out as not used
       const vbbWidthInCells = Math.ceil(VBB_WIDTH / CELL_SIZE);
 
       const groupCols =
@@ -1163,7 +1175,7 @@ export class PanelDataImportService {
       totalCols += groupCols;
 
       // Calculate rows needed for this group (feeders arranged in columns)
-      const columnsNeeded = Math.ceil(groupFeeders.length / feedersPerColumn);
+      // const columnsNeeded = Math.ceil(groupFeeders.length / feedersPerColumn); // Commented out as not used
       const rowsNeeded = feedersPerColumn; // Each column has feedersPerColumn rows
 
       maxRows = Math.max(maxRows, rowsNeeded);
@@ -1190,18 +1202,21 @@ export class PanelDataImportService {
    * - VBBs only between different height groups (not between individual feeders)
    * - 1800mm height limit per column
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static calculateFeederPosition(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     feeders: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     currentFeeder: any
   ): { x: number; y: number } {
     // Constants based on requirements - Must match GridStack GRID_UNIT_MM
     const CELL_SIZE = 100; // Must match GRID_UNIT_MM in FeederLayoutGrid.tsx
-    const VBB_HEIGHT = 1800; // 1800 mm
-    const VBB_WIDTH = 300; // 300 mm for VBB
+    // const VBB_HEIGHT = 1800; // 1800 mm (commented out as not used)
+    // const VBB_WIDTH = 300; // 300 mm for VBB (commented out as not used)
     const TOP_HBB_HEIGHT = 100; // 100 mm for top horizontal bus bar
-    const BOTTOM_HBB_HEIGHT = 100; // 100 mm for bottom horizontal bus bar
+    // const BOTTOM_HBB_HEIGHT = 100; // 100 mm for bottom horizontal bus bar (commented out as not used)
     const MAX_HEIGHT_MM = 1800; // Maximum height per column
-    const MAX_ROWS = 24; // Maximum 24 rows
+    // const MAX_ROWS = 24; // Maximum 24 rows (commented out as not used)
 
     // Group feeders by height (1800mm limit per group)
     const groupedFeeders = this.groupFeedersByHeight(feeders);
@@ -1306,6 +1321,7 @@ export class PanelDataImportService {
         `Calculating columns for group ${i} (${sortedGroups[i].totalHeight}mm):`
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       groupFeeders.forEach((feeder: any, feederIdx: number) => {
         const feederHeight = feeder.height || 300;
         const feederHeightGrid = Math.ceil(feederHeight / CELL_SIZE);

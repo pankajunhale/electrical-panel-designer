@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 export function ProjectsList() {
-  const [projects, setProjects] = useState([]);
+  // const [projects, setProjects] = useState([]); // Removed as it's not currently used
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +14,7 @@ export function ProjectsList() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      setProjects([]);
+      // setProjects([]); // Removed since projects state was removed
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

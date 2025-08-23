@@ -7,13 +7,11 @@ import {
   getFeedersWithLayoutsByPanelId,
   updateFeederLayoutPositions,
 } from "@/actions/feeder-layout-data-import";
-import { GridStack, GridStackWidget } from "gridstack";
+import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack.min.css";
 import {
   Plus,
   Minus,
-  RotateCcw,
-  RotateCw,
   GripVertical,
   Cable,
   Zap,
@@ -61,7 +59,6 @@ interface FeederWithLayout {
 }
 
 // Component for rendering equipment widgets
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface GALayoutItem {
   x: number;
   y: number;
@@ -90,8 +87,6 @@ const EquipmentWidget = ({
   const title = component.label;
   //const title = `${component.x}×${component.y}`;
   let subtitle = "";
-  const height = component.h * 60;
-  const width = component.w * 8.33;
   const actualWidth =
     component.originalWidth || component.w * VISUAL_CELL_SIZE_MM;
   const actualHeight =
@@ -188,6 +183,7 @@ const EquipmentWidget = ({
 
 interface FeederLayoutGridProps {
   panelId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLayoutChange?: (layouts: any[]) => void;
 }
 
@@ -480,7 +476,7 @@ export function FeederLayoutGrid({
         (feeder: FeederWithLayout, feederIndex: number) => {
           const feederHeight = feeder.layout?.height || 300;
           const feederHeightGrid = mmToGrid(feederHeight);
-          const feederWidth = mmToGrid(feeder.layout?.width || 300);
+          feederWidth = mmToGrid(feeder.layout?.width || 300);
           // Distribute feeders across multiple columns within the group
           const feederX =
             groupStartX + (currentColumnInGroup % columnsForThisGroup);
@@ -577,6 +573,7 @@ export function FeederLayoutGrid({
 
       // Update existing widgets in the grid
       const widgets = gridInstanceRef.current.getGridItems();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       widgets.forEach((widget: any) => {
         const el = widget.el;
         const itemId =
@@ -633,6 +630,7 @@ export function FeederLayoutGrid({
 
       // Update existing widgets in the grid
       const widgets = gridInstanceRef.current.getGridItems();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       widgets.forEach((widget: any) => {
         const el = widget.el;
         const itemId =
@@ -675,7 +673,7 @@ export function FeederLayoutGrid({
 
     // Add to GridStack instance if it exists
     if (gridInstanceRef.current) {
-      const widget = gridInstanceRef.current.addWidget({
+      gridInstanceRef.current.addWidget({
         id: newItem.id,
         x: newItem.x,
         y: newItem.y,
@@ -714,7 +712,7 @@ export function FeederLayoutGrid({
 
     // Add to GridStack instance if it exists
     if (gridInstanceRef.current) {
-      const widget = gridInstanceRef.current.addWidget({
+      gridInstanceRef.current.addWidget({
         id: newItem.id,
         x: newItem.x,
         y: newItem.y,
@@ -743,24 +741,24 @@ export function FeederLayoutGrid({
     await loadFeeders(isAddBottomBusBar);
   };
 
-  // Remove layout item
-  const removeLayoutItem = (itemId: string) => {
-    setLayoutItems((prev) => prev.filter((item) => item.id !== itemId));
+  // Remove layout item (commented out as it's not currently used)
+  // const removeLayoutItem = (itemId: string) => {
+  //   setLayoutItems((prev) => prev.filter((item) => item.id !== itemId));
 
-    // Remove from GridStack instance if it exists
-    if (gridInstanceRef.current) {
-      const widget = gridInstanceRef.current
-        .getGridItems()
-        .find(
-          (item: any) =>
-            item.id === itemId ||
-            (item as any).el?.getAttribute("gs-id") === itemId
-        );
-      if (widget) {
-        gridInstanceRef.current.removeWidget((widget as any).el);
-      }
-    }
-  };
+  //   // Remove from GridStack instance if it exists
+  //   if (gridInstanceRef.current) {
+  //     const widget = gridInstanceRef.current
+  //       .getGridItems()
+  //       .find(
+  //         (item: any) =>
+  //           item.id === itemId ||
+  //           (item as any).el?.getAttribute("gs-id") === itemId
+  //       );
+  //     if (widget) {
+  //       gridInstanceRef.current.removeWidget((widget as any).el);
+  //     }
+  //   }
+  // };
 
   // Calculate grid dimensions
   const getGridDimensions = () => {
@@ -855,7 +853,9 @@ export function FeederLayoutGrid({
     gridInstanceRef.current = grid;
 
     // Listen for layout changes
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     grid.on("change", (event: any, items: any[]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const layouts = items.map((item: any) => ({
         feederId: item.id,
         x: item.x * VISUAL_CELL_SIZE_MM, // Convert grid units back to mm using visual size
@@ -908,6 +908,7 @@ export function FeederLayoutGrid({
       if (Array.isArray(layouts)) {
         const result = await updateFeederLayoutPositions(
           panelId,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           layouts as any[]
         );
         if (result.success) {
@@ -1155,10 +1156,13 @@ export function FeederLayoutGrid({
         Panel ID: {panelId} | Feeders: {feeders.length} | Columns: {gridColumns}{" "}
         | Grid: {panelDimensions.columns}×{panelDimensions.rows} | Size:{" "}
         {panelDimensions.width} × {panelDimensions.height}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {(panelDimensions as any).maxFeederWidth && (
           <span>
             {" "}
-            | Max Feeder: {(panelDimensions as any).maxFeederWidth}×
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}|
+            Max Feeder: {(panelDimensions as any).maxFeederWidth}×
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {(panelDimensions as any).maxFeederHeight} mm
           </span>
         )}

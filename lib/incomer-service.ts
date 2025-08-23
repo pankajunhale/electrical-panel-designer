@@ -10,6 +10,7 @@ export class IncomerService {
   /**
    * Convert Prisma incomer to DTO format
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private convertToDto(incomer: any): IncomerDto {
     return {
       ...incomer,

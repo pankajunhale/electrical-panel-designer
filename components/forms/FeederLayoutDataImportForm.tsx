@@ -9,8 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// Badge and Separator components removed as they're not currently used
+// import { Badge } from "@/components/ui/badge";
+// import { Separator } from "@/components/ui/separator";
 import {
   importDefaultFeederLayouts,
   getFeederLayoutStatistics,
@@ -81,7 +82,7 @@ export default function FeederLayoutDataImportForm() {
           </CardTitle>
           <CardDescription>
             Import default feeder layouts for all existing feeders. This will
-            create a default layout for each feeder that doesn't already have
+            create a default layout for each feeder that doesn&apos;t already have
             one.
           </CardDescription>
         </CardHeader>
@@ -211,7 +212,7 @@ export default function FeederLayoutDataImportForm() {
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Loops through all existing feeders in the database</li>
                   <li>
-                    • Creates a default layout for each feeder that doesn't have
+                    • Creates a default layout for each feeder that doesn&apos;t have
                     one
                   </li>
                   <li>

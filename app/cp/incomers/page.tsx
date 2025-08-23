@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { getAllIncomers } from "@/actions/ga/incomers";
+// import { getAllIncomers } from "@/actions/ga/incomers"; // Removed as not used
 import { IncomersForm } from "@/components/forms/ga/IncomersForm";
 
 export default async function IncomersPage() {
@@ -11,8 +11,9 @@ export default async function IncomersPage() {
     redirect("/auth/login");
   }
 
-  const incomersResult = await getAllIncomers();
-  const incomers = incomersResult.success ? incomersResult.data : [];
+  // Note: incomers data fetching was removed as it's not currently used in the component
+  // const incomersResult = await getAllIncomers();
+  // const incomers = incomersResult.success ? incomersResult.data : [];
 
   return (
     <div className="container mx-auto py-6 space-y-6">

@@ -18,7 +18,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Avatar components removed as they're not currently used
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Settings, Users, FileText, BarChart3, Home, Zap } from "lucide-react";
 import { UserDropdown } from "@/components/user-dropdown";

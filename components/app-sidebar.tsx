@@ -12,7 +12,7 @@ import {
   Search,
   LogIn,
   UserPlus,
-  LogOut,
+  // LogOut, // Removed as it's not currently used
   Sparkles,
 } from "lucide-react";
 import { UserDropdown } from "@/components/user-dropdown";

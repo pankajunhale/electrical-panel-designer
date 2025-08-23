@@ -52,7 +52,9 @@ export function PanelsForm({
   });
 
   // State for dropdown data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projects, setProjects] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [locations, setLocations] = useState<any[]>([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
 
