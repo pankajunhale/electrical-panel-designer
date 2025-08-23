@@ -961,432 +961,446 @@ export function FeederLayoutGrid({
           text-overflow: ellipsis;
         }
       `}</style>
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Panel Feeder Layout</h2>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowDimensions(!showDimensions)}
-            variant="outline"
-            size="sm"
-          >
-            <Ruler className="h-3 w-3 mr-1" />
-            {showDimensions ? "Hide" : "Show"} Dimensions
-          </Button>
-          <Button
-            onClick={() => setShowGridInfo(!showGridInfo)}
-            variant="outline"
-            size="sm"
-          >
-            <Info className="h-3 w-3 mr-1" />
-            Grid Info
-          </Button>
-          <Button onClick={() => loadFeeders()} variant="outline" size="sm">
-            Refresh
-          </Button>
-          <Button onClick={handleSaveLayout} size="sm">
-            Save Layout
-          </Button>
+      <div className="space-y-4 p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Panel Feeder Layout</h2>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowDimensions(!showDimensions)}
+              variant="outline"
+              size="sm"
+            >
+              <Ruler className="h-3 w-3 mr-1" />
+              {showDimensions ? "Hide" : "Show"} Dimensions
+            </Button>
+            <Button
+              onClick={() => setShowGridInfo(!showGridInfo)}
+              variant="outline"
+              size="sm"
+            >
+              <Info className="h-3 w-3 mr-1" />
+              Grid Info
+            </Button>
+            <Button
+              onClick={() => loadFeeders()}
+              variant="outline"
+              size="sm"
+              disabled={true}
+            >
+              Refresh
+            </Button>
+            <Button onClick={handleSaveLayout} size="sm">
+              Save Layout
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Grid Information Display */}
-      {showGridInfo && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Grid Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Total Width:</span>{" "}
-                {gridDimensions.width}
-              </div>
-              <div>
-                <span className="font-medium">Total Height:</span>{" "}
-                {gridDimensions.height}
-              </div>
-              <div>
-                <span className="font-medium">Columns:</span>{" "}
-                {gridDimensions.columns}
-              </div>
-              <div>
-                <span className="font-medium">Rows:</span> {gridDimensions.rows}
-              </div>
-              <div>
-                <span className="font-medium">Cell Width:</span>{" "}
-                {gridDimensions.cellWidth}
-              </div>
-              <div>
-                <span className="font-medium">Cell Height:</span>{" "}
-                {gridDimensions.cellHeight}
-              </div>
-              <div>
-                <span className="font-medium">Components:</span>{" "}
-                {layoutItems.length + feeders.length}
-              </div>
-              <div>
-                <span className="font-medium">Feeders:</span> {feeders.length}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Layout Control Toolbar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Layout Controls</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Column Controls */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium">Columns ({gridColumns})</h4>
-              <div className="flex gap-1">
-                <Button
-                  onClick={addColumn}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  disabled={isUpdatingGrid}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-                <Button
-                  onClick={removeColumn}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  disabled={gridColumns <= 3 || isUpdatingGrid}
-                >
-                  <Minus className="h-3 w-3" />
-                </Button>
-              </div>
-              {isUpdatingGrid && (
-                <div className="text-xs text-blue-600 animate-pulse">
-                  Updating grid...
-                </div>
-              )}
-            </div>
-
-            {/* Cable Alley Controls */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium">Cable Alley</h4>
-              <div className="flex gap-1">
-                <Button
-                  onClick={() => addCableAlley("left")}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Cable className="h-3 w-3" />
-                  Left
-                </Button>
-                <Button
-                  onClick={() => addCableAlley("right")}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Cable className="h-3 w-3" />
-                  Right
-                </Button>
-              </div>
-            </div>
-
-            {/* Vertical Bus Bar Controls */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium">Vertical Bus Bar</h4>
-              <div className="flex gap-1">
-                <Button
-                  onClick={() => addVerticalBusBar(Math.floor(gridColumns / 3))}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <GripVertical className="h-3 w-3" />
-                  Left
-                </Button>
-                <Button
-                  onClick={() =>
-                    addVerticalBusBar(Math.floor((2 * gridColumns) / 3))
-                  }
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <GripVertical className="h-3 w-3" />
-                  Right
-                </Button>
-              </div>
-            </div>
-
-            {/* Top Bus Bar Controls */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium">Top Bus Bar</h4>
-              <div className="flex gap-1">
-                {!isAddBottomBusBar ? (
-                  <Button
-                    onClick={() => manageBottomBusBarHandler(true)}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Zap className="h-3 w-3" />
-                    Add
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => manageBottomBusBarHandler(false)}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Zap className="h-3 w-3" />
-                    Remove
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="text-sm text-muted-foreground">
-        Panel ID: {panelId} | Feeders: {feeders.length} | Columns: {gridColumns}{" "}
-        | Grid: {panelDimensions.columns}×{panelDimensions.rows} | Size:{" "}
-        {panelDimensions.width} × {panelDimensions.height}
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {(panelDimensions as any).maxFeederWidth && (
-          <span>
-            {" "}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}|
-            Max Feeder: {(panelDimensions as any).maxFeederWidth}×
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(panelDimensions as any).maxFeederHeight} mm
-          </span>
-        )}
-      </div>
-
-      {/* Layout Legend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Panel Layout Legend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded"></div>
-              <span className="text-xs">HBB - Horizontal Bus Bar</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-200 border border-purple-400 rounded"></div>
-              <span className="text-xs">VBB - Vertical Bus Bar</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-200 border border-green-400 rounded"></div>
-              <span className="text-xs">Cable Alley</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-200 border border-red-400 rounded"></div>
-              <span className="text-xs">Incomers</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
-              <span className="text-xs">Feeders</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {feeders.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Panel Data Available
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Import panel data first to create feeders and display the
-                  layout grid.
-                </p>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• Go to Data Import section</p>
-                  <p>• Upload your panel data file</p>
-                  <p>• Return here to see the layout grid</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {/* Grid Container */}
-          <div
-            ref={gridRef}
-            className={`grid-stack border-2 border-dashed relative ${
-              isUpdatingGrid ? "opacity-75" : ""
-            }`}
-            style={{
-              backgroundImage: `
-                   linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-                   linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
-                 `,
-              backgroundSize: `${100 / panelDimensions.columns}% 60px`,
-              height: panelDimensions.height,
-            }}
-          >
-            {isUpdatingGrid && (
-              <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center z-10">
-                <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm font-medium text-blue-600">
-                      Updating Grid Layout...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* Grid Dimension Labels */}
-            {showDimensions && (
-              <>
-                {/* Column labels */}
-                {Array.from({ length: gridColumns }, (_, i) => (
-                  <div
-                    key={`col-${i}`}
-                    className="absolute top-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
-                    style={{
-                      left: `${(i * 100) / gridColumns}%`,
-                      transform: "translateX(-50%)",
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                ))}
-                {/* Row labels */}
-                {Array.from({ length: panelDimensions.rows }, (_, i) => (
-                  <div
-                    key={`row-${i}`}
-                    className="absolute left-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
-                    style={{
-                      top: `${i * 60}px`,
-                      transform: "translateY(-50%)",
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                ))}
-                {/* Grid cell unit labels */}
-                {Array.from({ length: panelDimensions.columns }, (_, col) =>
-                  Array.from({ length: panelDimensions.rows }, (_, row) => (
-                    <div
-                      key={`cell-${col}-${row}`}
-                      className="absolute text-xs font-mono text-gray-400 bg-white/60 px-1 rounded border border-gray-200"
-                      style={{
-                        left: `${(col * 100) / panelDimensions.columns}%`,
-                        top: `${row * 60}px`,
-                        width: `${100 / panelDimensions.columns}%`,
-                        height: "60px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {VISUAL_CELL_SIZE_MM}×{VISUAL_CELL_SIZE_MM}
-                    </div>
-                  ))
-                )}
-              </>
-            )}
-
-            {/* Layout Items */}
-            {layoutItems.map((item) => (
-              <div
-                key={item.id}
-                className="grid-stack-item"
-                gs-w={item.w}
-                gs-h={item.h}
-                gs-x={item.x}
-                gs-y={item.y}
-                gs-no-resize="true"
-                gs-no-move={
-                  item.id.startsWith("hbb-top") ||
-                  item.id.startsWith("incomers")
-                    ? "true"
-                    : "false"
-                }
-              >
-                <div
-                  className={`${
-                    item.type !== "HBB" ? "grid-stack-item-content" : ""
-                  } w-full`}
-                >
-                  <EquipmentWidget
-                    component={item}
-                    isResize={true}
-                    showDimensions={showDimensions}
-                  />
-                </div>
-              </div>
-            ))}
-
-            {/* Feeders are now handled through layoutItems */}
-          </div>
-
-          {/* Feeders List */}
+        {/* Grid Information Display */}
+        {showGridInfo && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Feeders in Panel</CardTitle>
+              <CardTitle className="text-sm">Grid Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {feeders.map((feeder) => (
-                  <div
-                    key={feeder.id}
-                    className="p-3 border rounded-lg bg-yellow-50"
-                  >
-                    <h4 className="font-medium text-sm mb-1">
-                      {feeder.description}
-                    </h4>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      {feeder.ratingKw && <p>Power: {feeder.ratingKw} kW</p>}
-                      {feeder.ratingHp && <p>HP: {feeder.ratingHp}</p>}
-                      {feeder.incomerRating && (
-                        <p>Incomer: {feeder.incomerRating}A</p>
-                      )}
-                      {feeder.layout ? (
-                        <p className="text-green-600">
-                          Position: ({feeder.layout.x}, {feeder.layout.y}) |
-                          Size: {feeder.layout.width}×{feeder.layout.height}
-                        </p>
-                      ) : (
-                        <p className="text-orange-600">No layout assigned</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Total Width:</span>{" "}
+                  {gridDimensions.width}
+                </div>
+                <div>
+                  <span className="font-medium">Total Height:</span>{" "}
+                  {gridDimensions.height}
+                </div>
+                <div>
+                  <span className="font-medium">Columns:</span>{" "}
+                  {gridDimensions.columns}
+                </div>
+                <div>
+                  <span className="font-medium">Rows:</span>{" "}
+                  {gridDimensions.rows}
+                </div>
+                <div>
+                  <span className="font-medium">Cell Width:</span>{" "}
+                  {gridDimensions.cellWidth}
+                </div>
+                <div>
+                  <span className="font-medium">Cell Height:</span>{" "}
+                  {gridDimensions.cellHeight}
+                </div>
+                <div>
+                  <span className="font-medium">Components:</span>{" "}
+                  {layoutItems.length + feeders.length}
+                </div>
+                <div>
+                  <span className="font-medium">Feeders:</span> {feeders.length}
+                </div>
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Layout Control Toolbar */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Layout Controls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Column Controls */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium">Columns ({gridColumns})</h4>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={addColumn}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    onClick={removeColumn}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                </div>
+                {isUpdatingGrid && (
+                  <div className="text-xs text-blue-600 animate-pulse">
+                    Updating grid...
+                  </div>
+                )}
+              </div>
+
+              {/* Cable Alley Controls */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium">Cable Alley</h4>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => addCableAlley("left")}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <Cable className="h-3 w-3" />
+                    Left
+                  </Button>
+                  <Button
+                    onClick={() => addCableAlley("right")}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <Cable className="h-3 w-3" />
+                    Right
+                  </Button>
+                </div>
+              </div>
+
+              {/* Vertical Bus Bar Controls */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium">Vertical Bus Bar</h4>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() =>
+                      addVerticalBusBar(Math.floor(gridColumns / 3))
+                    }
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <GripVertical className="h-3 w-3" />
+                    Left
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      addVerticalBusBar(Math.floor((2 * gridColumns) / 3))
+                    }
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={true}
+                  >
+                    <GripVertical className="h-3 w-3" />
+                    Right
+                  </Button>
+                </div>
+              </div>
+
+              {/* Top Bus Bar Controls */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium">Top Bus Bar</h4>
+                <div className="flex gap-1">
+                  {!isAddBottomBusBar ? (
+                    <Button
+                      onClick={() => manageBottomBusBarHandler(true)}
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Zap className="h-3 w-3" />
+                      Add
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => manageBottomBusBarHandler(false)}
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Zap className="h-3 w-3" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-sm text-muted-foreground">
+          Panel ID: {panelId} | Feeders: {feeders.length} | Columns:{" "}
+          {gridColumns} | Grid: {panelDimensions.columns}×{panelDimensions.rows}{" "}
+          | Size: {panelDimensions.width} × {panelDimensions.height}
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(panelDimensions as any).maxFeederWidth && (
+            <span>
+              {" "}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              | Max Feeder: {(panelDimensions as any).maxFeederWidth}×
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(panelDimensions as any).maxFeederHeight} mm
+            </span>
+          )}
         </div>
-      )}
+
+        {/* Layout Legend */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Panel Layout Legend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded"></div>
+                <span className="text-xs">HBB - Horizontal Bus Bar</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-purple-200 border border-purple-400 rounded"></div>
+                <span className="text-xs">VBB - Vertical Bus Bar</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-200 border border-green-400 rounded"></div>
+                <span className="text-xs">Cable Alley</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-200 border border-red-400 rounded"></div>
+                <span className="text-xs">Incomers</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
+                <span className="text-xs">Feeders</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {feeders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Panel Data Available
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Import panel data first to create feeders and display the
+                    layout grid.
+                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>• Go to Data Import section</p>
+                    <p>• Upload your panel data file</p>
+                    <p>• Return here to see the layout grid</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {/* Grid Container */}
+            <div
+              ref={gridRef}
+              className={`grid-stack border-2 border-dashed relative ${
+                isUpdatingGrid ? "opacity-75" : ""
+              }`}
+              style={{
+                backgroundImage: `
+                   linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
+                 `,
+                backgroundSize: `${100 / panelDimensions.columns}% 60px`,
+                height: panelDimensions.height,
+              }}
+            >
+              {isUpdatingGrid && (
+                <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center z-10">
+                  <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm font-medium text-blue-600">
+                        Updating Grid Layout...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Grid Dimension Labels */}
+              {showDimensions && (
+                <>
+                  {/* Column labels */}
+                  {Array.from({ length: gridColumns }, (_, i) => (
+                    <div
+                      key={`col-${i}`}
+                      className="absolute top-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
+                      style={{
+                        left: `${(i * 100) / gridColumns}%`,
+                        transform: "translateX(-50%)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                  ))}
+                  {/* Row labels */}
+                  {Array.from({ length: panelDimensions.rows }, (_, i) => (
+                    <div
+                      key={`row-${i}`}
+                      className="absolute left-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
+                      style={{
+                        top: `${i * 60}px`,
+                        transform: "translateY(-50%)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                  ))}
+                  {/* Grid cell unit labels */}
+                  {Array.from({ length: panelDimensions.columns }, (_, col) =>
+                    Array.from({ length: panelDimensions.rows }, (_, row) => (
+                      <div
+                        key={`cell-${col}-${row}`}
+                        className="absolute text-xs font-mono text-gray-400 bg-white/60 px-1 rounded border border-gray-200"
+                        style={{
+                          left: `${(col * 100) / panelDimensions.columns}%`,
+                          top: `${row * 60}px`,
+                          width: `${100 / panelDimensions.columns}%`,
+                          height: "60px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {VISUAL_CELL_SIZE_MM}×{VISUAL_CELL_SIZE_MM}
+                      </div>
+                    ))
+                  )}
+                </>
+              )}
+
+              {/* Layout Items */}
+              {layoutItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid-stack-item"
+                  gs-w={item.w}
+                  gs-h={item.h}
+                  gs-x={item.x}
+                  gs-y={item.y}
+                  gs-no-resize="true"
+                  gs-no-move={
+                    item.id.startsWith("hbb-top") ||
+                    item.id.startsWith("incomers")
+                      ? "true"
+                      : "false"
+                  }
+                >
+                  <div
+                    className={`${
+                      item.type !== "HBB" ? "grid-stack-item-content" : ""
+                    } w-full`}
+                  >
+                    <EquipmentWidget
+                      component={item}
+                      isResize={true}
+                      showDimensions={showDimensions}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {/* Feeders are now handled through layoutItems */}
+            </div>
+
+            {/* Feeders List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Feeders in Panel</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {feeders.map((feeder) => (
+                    <div
+                      key={feeder.id}
+                      className="p-3 border rounded-lg bg-yellow-50"
+                    >
+                      <h4 className="font-medium text-sm mb-1">
+                        {feeder.description}
+                      </h4>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        {feeder.ratingKw && <p>Power: {feeder.ratingKw} kW</p>}
+                        {feeder.ratingHp && <p>HP: {feeder.ratingHp}</p>}
+                        {feeder.incomerRating && (
+                          <p>Incomer: {feeder.incomerRating}A</p>
+                        )}
+                        {feeder.layout ? (
+                          <p className="text-green-600">
+                            Position: ({feeder.layout.x}, {feeder.layout.y}) |
+                            Size: {feeder.layout.width}×{feeder.layout.height}
+                          </p>
+                        ) : (
+                          <p className="text-orange-600">No layout assigned</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

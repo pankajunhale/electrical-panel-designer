@@ -81,8 +81,29 @@ function getEquipmentTypeIcon(type: string) {
 }
 
 export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
-  const [tabularData, setTabularData] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const sampleData = `slno	panelname	item	subqty	typecode	height	width	depth
+01	MCC VIENTN	2000A 4P MDO ACB MP	1	ACB	750	1000	1000
+01	MCC VIENTN	3000VA 1ph CONTROL Transformer	2	SWITCH	600	500	0
+01	MCC VIENTN	16A 2 Pole ON-OFF Rotary Switch	4	SWITCH	300	0	0
+01	MCC VIENTN	Metering Package Am/Vm/IL	1	SWITCH	300	500	0
+01	MCC VIENTN	10000VA1ph CONTROL Transformer	3	SWITCH	600	600	0
+01	MCC VIENTN	25A MPCB 11KW with RH Magnetic	3	SWITCH	300	0	0
+01	MCC VIENTN	100000 1ph CONTROL Transformer	5	SWITCH	900	600	0
+01	MCC VIENTN	250A TP 25KA MCCB TM CVS	5	SWITCH	450	500	0
+01	MCC VIENTN	DOL starter 3ph 20HP/15KW	3	STARTE	600	500	0
+01	MCC VIENTN	DOL starter 3ph 0.5HP/0.12KW	1	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 0.5HP/0.37KW	6	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 0.5HP/0.37KW	8	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 2HP/1.5KW	5	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 4HP/3KW	2	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 5HP/3.7KW	3	STARTE	300	500	0
+01	MCC VIENTN	DOL starter 3ph 7.5HP/5.7KW	7	STARTE	300	500	0
+01	MCC VIENTN	RDOL starter 3ph 7.5HP/5.7KW	1	STARTE	300	500	0
+01	MCC VIENTN	RDOL starter 3ph 10HP/7.5KW	2	STARTE	300	500	0`;
+  const [tabularData, setTabularData] = useState(sampleData);
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    "d30bGHbPLomUXXLurx8hd"
+  );
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,13 +116,6 @@ export function PanelDataImportForm({ projects }: PanelDataImportFormProps) {
   >(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [importedEquipmentData, setImportedEquipmentData] = useState<any[]>([]);
-
-  const sampleData = `slno	panelname	item	subqty	typecode	height	width
-01	MCC VIENTN	2000A 4P MDO ACB MP	1	ACB	750	1000
-01	MCC VIENTN	3000VA 1ph CONTROL Transformer	2	SWITCH	600	500
-01	MCC VIENTN	16A 2 Pole ON-Off Rotary Switch	4	SWITCH	300	0
-01	MCC VIENTN	DOL starter 3ph 20HP/15KW	3	STARTE	600	500
-01	MCC VIENTN	S/Delta Starter 25HP/18.5KW	2	STARTE	900	500`;
 
   const handleLoadSample = () => {
     setTabularData(sampleData);

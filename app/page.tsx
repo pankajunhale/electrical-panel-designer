@@ -41,8 +41,8 @@ export default function Home() {
                 className="pl-10 w-64 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
               />
             </div>
-            <Button variant="outline" size="sm">
-              Sign In
+            <Button asChild variant="outline" size="sm">
+              <a href="/auth/login">Sign In</a>
             </Button>
             <Button size="sm">Get Started</Button>
           </div>
@@ -76,6 +76,12 @@ export default function Home() {
               <a href="/cp">
                 View Dashboard
                 <BarChart3 className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <a href="/auth/login">
+                Sign In
+                <Users className="ml-2 h-4 w-4" />
               </a>
             </Button>
           </div>

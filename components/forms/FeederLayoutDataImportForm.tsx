@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -68,9 +68,9 @@ export default function FeederLayoutDataImportForm() {
   };
 
   // Load statistics on component mount
-  useState(() => {
+  useEffect(() => {
     loadStatistics();
-  });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -82,8 +82,8 @@ export default function FeederLayoutDataImportForm() {
           </CardTitle>
           <CardDescription>
             Import default feeder layouts for all existing feeders. This will
-            create a default layout for each feeder that doesn&apos;t already have
-            one.
+            create a default layout for each feeder that doesn&apos;t already
+            have one.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -212,8 +212,8 @@ export default function FeederLayoutDataImportForm() {
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Loops through all existing feeders in the database</li>
                   <li>
-                    • Creates a default layout for each feeder that doesn&apos;t have
-                    one
+                    • Creates a default layout for each feeder that doesn&apos;t
+                    have one
                   </li>
                   <li>
                     • Uses feeder ID as the reference key for the feeder_layout
