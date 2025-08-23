@@ -59,11 +59,20 @@ export default function CpLayout({ children }: CpLayoutProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
+                      <a href="/cp/data-import">
+                        <Zap className="mr-2 h-4 w-4" />
+                        Panel Design
+                        <Badge variant="secondary" className="ml-auto">
+                          V2
+                        </Badge>
+                      </a>
+                    </SidebarMenuButton>
+                    <SidebarMenuButton asChild>
                       <a href="/cp/panel-design">
                         <Zap className="mr-2 h-4 w-4" />
                         Panel Design
                         <Badge variant="secondary" className="ml-auto">
-                          New
+                          V1
                         </Badge>
                       </a>
                     </SidebarMenuButton>

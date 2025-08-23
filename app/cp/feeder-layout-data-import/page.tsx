@@ -1,6 +1,6 @@
 import FeederLayoutDataImportForm from "@/components/forms/FeederLayoutDataImportForm";
 
-export default function FeederLayoutDataImportPage() {
+export default async function FeederLayoutDataImportPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
