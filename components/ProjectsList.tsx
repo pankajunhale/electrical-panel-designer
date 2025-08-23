@@ -1,10 +1,9 @@
 "use client";
 
-import { ProjectDto } from "@/dto/project.dto";
 import { useState, useEffect } from "react";
 
 export function ProjectsList() {
-  const [projects, setProjects] = useState<ProjectDto[]>([]);
+  // const [projects, setProjects] = useState([]); // Removed as it's not currently used
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +14,7 @@ export function ProjectsList() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      setProjects([]);
+      // setProjects([]); // Removed since projects state was removed
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -67,26 +66,6 @@ export function ProjectsList() {
       </div>
 
       {/* Projects List */}
-      <div className="space-y-2">
-        {projects.length === 0 ? (
-          <p className="text-gray-500">No projects found.</p>
-        ) : (
-          projects.map((project) => (
-            <div
-              key={project.id}
-              className="p-4 border rounded hover:bg-gray-50"
-            >
-              <h3 className="font-semibold">{project.name}</h3>
-              {project.description && (
-                <p className="text-gray-600 mt-1">{project.description}</p>
-              )}
-              <p className="text-sm text-gray-500 mt-2">
-                Created: {new Date(project.createdAt!).toLocaleDateString()}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
     </div>
   );
 }

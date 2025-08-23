@@ -35,14 +35,15 @@ export function ProjectsForm({
   const [state, formAction] = useActionState(submitProjects, {
     errors: {},
     message: "",
+    success: false,
   });
 
   const form = useForm<ProjectsFormData>({
     resolver: zodResolver(projectsSchema),
     defaultValues: initialData || {
       name: "",
+      description: "",
       client_id: undefined,
-      user_id: undefined,
     },
     mode: "onChange",
   });
@@ -74,7 +75,7 @@ export function ProjectsForm({
         })}
         className="space-y-8"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
             name="name"
@@ -97,23 +98,15 @@ export function ProjectsForm({
 
           <FormField
             control={form.control}
-            name="client_id"
+            name="description"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Client ID</FormLabel>
+                <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    placeholder="Enter client ID"
+                    placeholder="Enter project description"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -123,14 +116,14 @@ export function ProjectsForm({
 
           <FormField
             control={form.control}
-            name="user_id"
+            name="client_id"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>User ID</FormLabel>
+                <FormLabel>Client ID</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Enter user ID"
+                    placeholder="Enter client ID"
                     {...field}
                     value={field.value ?? ""}
                     onChange={(e) =>

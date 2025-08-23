@@ -94,6 +94,8 @@ model User {
   updatedPanels Panel[] @relation("PanelUpdatedBy")
   createdFeeders Feeder[] @relation("FeederCreatedBy")
   updatedFeeders Feeder[] @relation("FeederUpdatedBy")
+  createdIncomers Incomer[] @relation("IncomerCreatedBy")
+  updatedIncomers Incomer[] @relation("IncomerUpdatedBy")
   createdFeederLayouts FeederLayout[] @relation("FeederLayoutCreatedBy")
   updatedFeederLayouts FeederLayout[] @relation("FeederLayoutUpdatedBy")
   createdSLConfigs SLConfig[] @relation("SLConfigCreatedBy")
@@ -126,6 +128,7 @@ model UserTeam {
   @@index([userId])
   @@index([teamId])
   @@index([createdAt])
+  @@map("user_teams")
 }
 
 // ==============================
@@ -154,6 +157,7 @@ model Client {
   createdByUser User? @relation("ClientCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("ClientUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([contactEmail], name: "clients_contact_email_unique")
   @@index([teamId, createdAt])
   @@index([userId])
   @@index([name])
@@ -183,6 +187,7 @@ model Project {
   createdByUser User? @relation("ProjectCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("ProjectUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, teamId], name: "projects_name_team_unique")
   @@index([teamId, createdAt])
   @@index([userId])
   @@index([clientId])
@@ -208,6 +213,7 @@ model PanelLocation {
   createdByUser User? @relation("PanelLocationCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("PanelLocationUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, teamId], name: "panel_locations_name_team_unique")
   @@map("panel_locations")
 }
 
@@ -235,11 +241,13 @@ model Panel {
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   location PanelLocation? @relation(fields: [locationId], references: [id])
   feeders  Feeder[]
+  incomers Incomer[]
   slConfigs SLConfig[]
   equipmentData EquipmentData[]
   createdByUser User? @relation("PanelCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User? @relation("PanelUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([name, projectId], name: "panels_name_project_unique")
   @@index([projectId, status])
   @@index([status])
   @@index([name])
@@ -320,8 +328,18 @@ model Feeder {
   id            String   @id @default(uuid())
   panelId       String @map("panel_id")
   description   String?
+  shortDescription String? @map("short_description") @db.NVarChar(100)
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  // Feeder/Contactor Rating Information
+  incomerRating Decimal? @map("incomer_rating") @db.Decimal(10,2) // Incomer rating in Amperes
+  contactorRating Decimal? @map("contactor_rating") @db.Decimal(10,2) // Contactor rating in Amperes
+  controlOperation String? @map("control_operation") @db.NVarChar(100) // e.g., "Run Local+Rem"
+  wiringMaterial String? @map("wiring_material") @db.NVarChar(50) // e.g., "Copper"
+  cablesBusBars String? @map("cables_bus_bars") @db.NVarChar(50) // e.g., "Cable" or "BusBars"
+  // Physical dimensions in mm
+  height        Int? // Height in millimeters
+  width         Int? // Width in millimeters
   starterTypeId String? @map("starter_type_id")
   feederTypeId  String? @map("feeder_type_id")
   sourceTypeId  String? @map("source_type_id")
@@ -349,6 +367,29 @@ model Feeder {
   @@index([feederTypeId])
   @@index([createdAt])
   @@map("feeders")
+}
+
+model Incomer {
+  id            String   @id @default(uuid())
+  name          String   @db.NVarChar(100)
+  ampereRating  Decimal? @map("ampere_rating") @db.Decimal(10,2)
+  panelId       String @map("panel_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String? @map("created_by")
+  updatedBy     String? @map("updated_by")
+  version       Int @default(1)
+
+  // Relations
+  panel        Panel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("IncomerCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User? @relation("IncomerUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([name, panelId], name: "incomers_name_panel_unique")
+  @@index([panelId])
+  @@index([createdAt])
+  @@map("incomers")
 }
 
 model FeederLayout {
@@ -422,10 +463,20 @@ model EquipmentData {
   description   String
   ratingKw      Decimal? @map("rating_kw") @db.Decimal(10,2)
   ratingHp      Decimal? @map("rating_hp") @db.Decimal(10,2)
+  // Equipment Rating Information
+  ampereRating  Decimal? @map("ampere_rating") @db.Decimal(10,2) // Current rating in Amperes
+  voltageRating Decimal? @map("voltage_rating") @db.Decimal(10,2) // Voltage rating in Volts
+  powerRating   Decimal? @map("power_rating") @db.Decimal(10,2) // Power rating in VA/W
+  poleCount     Int? @map("pole_count") // Number of poles
+  breakingCapacity Decimal? @map("breaking_capacity") @db.Decimal(10,2) // Breaking capacity in KA
   starterTypeId String? @map("starter_type_id")
   quantity      Int @default(1)
   totalLoadKw   Decimal? @map("total_load_kw") @db.Decimal(10,2)
   equipmentTypeId String? @map("equipment_type_id")
+  // Physical dimensions for equipment layout
+  height        Int?
+  width         Int?
+  depth         Int?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")

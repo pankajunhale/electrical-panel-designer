@@ -15,8 +15,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useTransition } from "react";
-import { useActionState } from "react";
+import { useTransition, useActionState } from "react";
 import { submitClients } from "@/actions/ga/clients";
 
 interface ClientsFormProps {
@@ -36,6 +35,8 @@ export function ClientsForm({
   const [state, formAction] = useActionState(submitClients, {
     errors: {},
     message: "",
+    success: false,
+    data: undefined,
   });
 
   const form = useForm<ClientsFormData>({
@@ -43,8 +44,8 @@ export function ClientsForm({
     defaultValues: initialData || {
       name: "",
       address: "",
-      contact_email: "",
-      contact_number: "",
+      contactEmail: "",
+      contactNumber: "",
     },
     mode: "onChange",
   });
@@ -64,6 +65,7 @@ export function ClientsForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
+          console.log("Form submitted with data:", data);
           startTransition(() => {
             const formData = new FormData();
             Object.entries(data).forEach(([key, value]) => {
@@ -71,6 +73,7 @@ export function ClientsForm({
                 formData.append(key, value.toString());
               }
             });
+            console.log("FormData created:", formData);
             formAction(formData);
           });
         })}
@@ -99,7 +102,7 @@ export function ClientsForm({
 
           <FormField
             control={form.control}
-            name="contact_email"
+            name="contactEmail"
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel>Contact Email</FormLabel>
@@ -118,7 +121,7 @@ export function ClientsForm({
 
           <FormField
             control={form.control}
-            name="contact_number"
+            name="contactNumber"
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel>Contact Number</FormLabel>

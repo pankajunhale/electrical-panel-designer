@@ -10,6 +10,10 @@ export const equipmentDataSchema = z.object({
   quantity: z.number().min(1, "Quantity must be at least 1"),
   total_load_kw: z.number().optional(),
   equipment_type_id: z.number().optional(),
+  // Physical dimensions for equipment layout
+  height: z.number().min(0, "Height must be non-negative").optional(),
+  width: z.number().min(0, "Width must be non-negative").optional(),
+  depth: z.number().min(0, "Depth must be non-negative").optional(),
 });
 
 export type EquipmentDataFormData = z.infer<typeof equipmentDataSchema>;

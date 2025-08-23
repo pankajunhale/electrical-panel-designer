@@ -38,6 +38,8 @@ export function StarterTypesForm({
   const [state, formAction] = useActionState(submitStarterTypes, {
     errors: {},
     message: "",
+    success: false,
+    data: undefined,
   });
 
   const form = useForm<StarterTypesFormData>({
@@ -54,7 +56,7 @@ export function StarterTypesForm({
 
   // Handle successful submission
   useEffect(() => {
-    if (state.data && Object.keys(state.errors).length === 0) {
+    if (state.success && state.data && Object.keys(state.errors).length === 0) {
       onNext?.(state.data);
     }
   }, [state, onNext]);

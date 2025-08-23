@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { panelsSchema, PanelsFormData } from "@/schema/ga/panels";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Form,
   FormItem,
@@ -24,7 +24,11 @@ import {
 } from "@/components/ui/form";
 import { useTransition } from "react";
 import { useActionState } from "react";
-import { submitPanels } from "@/actions/ga/panels";
+import {
+  submitPanels,
+  getProjectsForDropdown,
+  getLocationsForDropdown,
+} from "@/actions/ga/panels";
 
 interface PanelsFormProps {
   onNext?: (data: PanelsFormData) => void;
@@ -43,25 +47,61 @@ export function PanelsForm({
   const [state, formAction] = useActionState(submitPanels, {
     errors: {},
     message: "",
+    success: false,
+    data: undefined,
   });
+
+  // State for dropdown data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [projects, setProjects] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [locations, setLocations] = useState<any[]>([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(true);
 
   const form = useForm<PanelsFormData>({
     resolver: zodResolver(panelsSchema),
     defaultValues: initialData || {
-      project_id: undefined,
       name: "",
       description: "",
-      voltage_level: "",
-      width: undefined,
-      height: undefined,
-      depth: undefined,
-      location_id: undefined,
-      front_view_url: "",
-      rear_view_url: "",
+      voltageLevel: "",
+      width: "",
+      height: "",
+      depth: "",
+      locationId: "",
+      frontViewUrl: "",
+      rearViewUrl: "",
       status: "draft",
+      projectId: "",
     },
     mode: "onChange",
   });
+
+  // Load dropdown data on component mount
+  useEffect(() => {
+    const loadDropdownData = async () => {
+      try {
+        setLoadingDropdowns(true);
+
+        // Load projects
+        const projectsResult = await getProjectsForDropdown();
+        if (projectsResult.success && projectsResult.data?.projects) {
+          setProjects(projectsResult.data.projects);
+        }
+
+        // Load locations
+        const locationsResult = await getLocationsForDropdown();
+        if (locationsResult.success && locationsResult.data) {
+          setLocations(locationsResult.data);
+        }
+      } catch (error) {
+        console.error("Error loading dropdown data:", error);
+      } finally {
+        setLoadingDropdowns(false);
+      }
+    };
+
+    loadDropdownData();
+  }, []);
 
   useEffect(() => {
     console.log("PanelsForm initialData:", initialData);
@@ -69,7 +109,7 @@ export function PanelsForm({
 
   // Handle successful submission
   useEffect(() => {
-    if (state.data && Object.keys(state.errors).length === 0) {
+    if (state.success && state.data && Object.keys(state.errors).length === 0) {
       onNext?.(state.data);
     }
   }, [state, onNext]);
@@ -113,25 +153,36 @@ export function PanelsForm({
 
           <FormField
             control={form.control}
-            name="project_id"
+            name="projectId"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Project ID</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Enter project ID"
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
-                  />
-                </FormControl>
+                <FormLabel>
+                  Project <span className="text-red-500">*</span>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={loadingDropdowns}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          loadingDropdowns
+                            ? "Loading projects..."
+                            : "Select a project"
+                        }
+                      />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -139,10 +190,12 @@ export function PanelsForm({
 
           <FormField
             control={form.control}
-            name="voltage_level"
+            name="voltageLevel"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Voltage Level</FormLabel>
+                <FormLabel>
+                  Voltage Level <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter voltage level"
@@ -160,7 +213,9 @@ export function PanelsForm({
             name="status"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Status</FormLabel>
+                <FormLabel>
+                  Status <span className="text-red-500">*</span>
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -187,20 +242,14 @@ export function PanelsForm({
             name="width"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Width (mm)</FormLabel>
+                <FormLabel>
+                  Width (mm) <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
                     placeholder="Enter width"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -213,20 +262,14 @@ export function PanelsForm({
             name="height"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Height (mm)</FormLabel>
+                <FormLabel>
+                  Height (mm) <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
                     placeholder="Enter height"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -239,20 +282,14 @@ export function PanelsForm({
             name="depth"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Depth (mm)</FormLabel>
+                <FormLabel>
+                  Depth (mm) <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
                     placeholder="Enter depth"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -262,25 +299,36 @@ export function PanelsForm({
 
           <FormField
             control={form.control}
-            name="location_id"
+            name="locationId"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Location ID</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Enter location ID"
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value)
-                      )
-                    }
-                  />
-                </FormControl>
+                <FormLabel>
+                  Location <span className="text-red-500">*</span>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={loadingDropdowns}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          loadingDropdowns
+                            ? "Loading locations..."
+                            : "Select a location"
+                        }
+                      />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -288,10 +336,12 @@ export function PanelsForm({
 
           <FormField
             control={form.control}
-            name="front_view_url"
+            name="frontViewUrl"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Front View URL</FormLabel>
+                <FormLabel>
+                  Front View URL <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter front view URL"
@@ -306,10 +356,12 @@ export function PanelsForm({
 
           <FormField
             control={form.control}
-            name="rear_view_url"
+            name="rearViewUrl"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Rear View URL</FormLabel>
+                <FormLabel>
+                  Rear View URL <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter rear view URL"
@@ -328,7 +380,9 @@ export function PanelsForm({
           name="description"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel>Description</FormLabel>
+              <FormLabel>
+                Description <span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Enter panel description"

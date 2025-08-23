@@ -39,6 +39,8 @@ export function EquipmentTypesForm({
   const [state, formAction] = useActionState(submitEquipmentTypes, {
     errors: {},
     message: "",
+    success: false,
+    data: undefined,
   });
 
   const form = useForm<EquipmentTypesFormData>({
@@ -56,7 +58,7 @@ export function EquipmentTypesForm({
 
   // Handle successful submission
   useEffect(() => {
-    if (state.data && Object.keys(state.errors).length === 0) {
+    if (state.success && state.data && Object.keys(state.errors).length === 0) {
       onNext?.(state.data);
     }
   }, [state, onNext]);
@@ -84,7 +86,7 @@ export function EquipmentTypesForm({
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel>
-                  Equipment Type Name <span className="text-red-500">*</span>
+                  Equipment Type Name<span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input

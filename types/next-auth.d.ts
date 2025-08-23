@@ -1,0 +1,28 @@
+import "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      teams: Array<{ id: string; name: string }>;
+    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    teams: Array<{ id: string; name: string }>;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role: string;
+    teams: Array<{ id: string; name: string }>;
+  }
+}

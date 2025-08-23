@@ -39,6 +39,8 @@ export function PanelLocationsForm({
   const [state, formAction] = useActionState(submitPanelLocations, {
     errors: {},
     message: "",
+    success: false,
+    data: undefined,
   });
 
   const form = useForm<PanelLocationsFormData>({
@@ -56,7 +58,7 @@ export function PanelLocationsForm({
 
   // Handle successful submission
   useEffect(() => {
-    if (state.data && Object.keys(state.errors).length === 0) {
+    if (state.success && state.data && Object.keys(state.errors).length === 0) {
       onNext?.(state.data);
     }
   }, [state, onNext]);
@@ -83,7 +85,9 @@ export function PanelLocationsForm({
             name="name"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Location Name</FormLabel>
+                <FormLabel>
+                  Location Name<span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter panel location name"
