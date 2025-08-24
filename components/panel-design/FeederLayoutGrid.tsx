@@ -274,50 +274,92 @@ export function FeederLayoutGrid({
     return groupedFeeders;
   };
 
-  // Calculate required columns based on service calculation
+  // Calculate required columns based on the new layout logic
   const calculateRequiredColumns = (feeders: FeederWithLayout[]) => {
-    // Group feeders by height (1800mm limit per group)
+    // Group feeders by width first
     const groupedFeeders = groupFeedersByHeight(feeders);
-    const totalGroups = Array.from(groupedFeeders.keys()).length;
+    let totalColumnsNew = 6;
+    groupedFeeders.map((group, outerIndex) => {
+      if (outerIndex === 0) {
+        totalColumnsNew += mmToGrid(300);
+      }
+      group.forEach((feeder, index) => {
+        if (index === 0) {
+          debugger;
+          totalColumnsNew += mmToGrid(feeder.layout?.width || 300);
+          // add vbb after this width group
+          totalColumnsNew += mmToGrid(300);
+        }
+      });
+      if (outerIndex === groupedFeeders.length - 1) {
+        totalColumnsNew += mmToGrid(300);
+      }
+    });
+
+    // Sort width groups by width (largest first)
+    const sortedWidthGroups = Array.from(groupedFeeders.entries()).sort(
+      ([widthA], [widthB]) => widthB - widthA
+    );
 
     // VBB dimensions
     const VBB_WIDTH_MM = 300;
     const VBB_WIDTH_GRID = mmToGrid(VBB_WIDTH_MM); // Convert to grid units (3 columns)
+    const MAX_HEIGHT_MM = 1800;
 
-    // Calculate total columns needed:
-    // - Feeders total: 1 column per feeder (46 feeders = 46 columns)
-    let feederColumns = 0; // feeders.length;
-    groupedFeeders.forEach((group) => {
-      group.forEach((feeder, index) => {
-        if (index === 0 && feeder.layout?.width) {
-          feederColumns += mmToGrid(feeder.layout?.width);
+    let totalColumns = 3; // Start with left cable alley (3 columns)
+    sortedWidthGroups.forEach(([width, widthGroupFeeders], widthGroupIndex) => {
+      console.log(
+        `Processing width group ${widthGroupIndex}: ${width}mm width, ${widthGroupFeeders.length} feeders`
+      );
+    });
+    // Calculate columns for each width group
+    sortedWidthGroups.forEach(([width, widthGroupFeeders], widthGroupIndex) => {
+      const feederWidthGrid = mmToGrid(width);
+      // debugger;
+      // Calculate how many columns we need for this width group
+      // Each column can hold feeders up to 1800mm height
+      let currentColumnHeight = 0;
+      let columnsNeededForWidth = 0;
+
+      widthGroupFeeders.forEach((feeder) => {
+        const feederHeight = feeder.layout?.height || 300;
+
+        if (currentColumnHeight + feederHeight > MAX_HEIGHT_MM) {
+          // Need a new column
+          columnsNeededForWidth += 1;
+          currentColumnHeight = feederHeight;
+        } else {
+          // Can fit in current column
+          currentColumnHeight += feederHeight;
         }
       });
+
+      // Add at least one column if we have feeders
+      if (widthGroupFeeders.length > 0 && columnsNeededForWidth === 0) {
+        columnsNeededForWidth = 1;
+      }
+
+      // Add columns for this width group (each column is feederWidthGrid wide)
+      totalColumns += columnsNeededForWidth * feederWidthGrid;
+
+      // Add VBB after this width group (except for last width group)
+      if (widthGroupIndex < sortedWidthGroups.length - 1) {
+        totalColumns += VBB_WIDTH_GRID;
+      }
     });
-    // - Internal VBBs: between groups → (totalGroups - 1) internal VBBs × 3 cols
-    const internalVBBColumns = (totalGroups - 1) * VBB_WIDTH_GRID;
 
-    // - Left & Right VBBs = 6 cols (3 cols each) - these are already in default layout
-    const sideVBBColumns = 6;
-
-    const totalColumns =
-      feederColumns + internalVBBColumns + sideVBBColumns + 0;
+    // Add right cable alley (3 columns)
+    totalColumns += 3;
 
     console.log(
-      `Calculated columns: ${totalGroups} groups, ${totalColumns} total columns needed`
+      `Calculated columns for new layout logic: ${totalColumns} total columns needed`
     );
-    console.log(`- Feeder columns: ${feederColumns}`);
-    console.log(
-      `- Internal VBB columns: ${internalVBBColumns} (${
-        totalGroups - 1
-      } VBBs × ${VBB_WIDTH_GRID} cols)`
-    );
-    console.log(`- Side VBB columns: ${sideVBBColumns} (left + right VBBs)`);
-    console.log(
-      `- Total: ${feederColumns} + ${internalVBBColumns} + ${sideVBBColumns} = ${totalColumns}`
-    );
+    console.log(`- Width groups: ${sortedWidthGroups.length}`);
+    console.log(`- Left cable alley: 3 columns`);
+    console.log(`- Right cable alley: 3 columns`);
+    console.log(`- Total: ${totalColumns} columns`);
 
-    return Math.max(12, totalColumns); // Minimum 12 columns
+    return Math.max(12, totalColumnsNew); // Minimum 12 columns
   };
 
   // Load feeders with layouts
