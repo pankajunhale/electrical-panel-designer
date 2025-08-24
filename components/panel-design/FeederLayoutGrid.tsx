@@ -23,13 +23,13 @@ import {
   ToggleLeft,
 } from "lucide-react";
 
-// Grid unit in mm (1 grid unit = 100mm for calculations)
+// Grid unit in mm (1 grid unit = 300mm for calculations)
 const GRID_UNIT_MM = 100;
 
 // Visual cell size in mm (how cells appear in UI)
 const VISUAL_CELL_SIZE_MM = 100;
 
-// Convert mm to grid units (1 grid unit = 100mm)
+// Convert mm to grid units (1 grid unit = 300mm)
 const mmToGrid = (mm: number | null | undefined) => {
   if (!mm) return 1;
   return Math.max(1, Math.ceil(mm / GRID_UNIT_MM));
@@ -405,7 +405,7 @@ export function FeederLayoutGrid({
           // Vertical Bus Bar (Right)
           {
             id: "cable-alley-right",
-            x: requiredColumns - 1,
+            x: requiredColumns - 3,
             y: 1,
             w: 3,
             h: 18,
@@ -858,7 +858,7 @@ export function FeederLayoutGrid({
     const newItem: GridWidget = {
       id: `vbb-${Date.now()}`,
       x: x,
-      y: mmToGrid(100), // Start after top HBB
+      y: mmToGrid(VISUAL_CELL_SIZE_MM), // Start after top HBB
       w: 1,
       h: mmToGrid(1800), // 1800mm height
       label: "VBB",
@@ -919,9 +919,9 @@ export function FeederLayoutGrid({
 
   // Calculate grid dimensions
   const getGridDimensions = () => {
-    const cellWidthPercent = 100 / gridColumns; // Dynamic cell width based on columns
-    const totalWidth = gridColumns * cellWidthPercent; // Should equal 100%
-    const totalHeight = 10 * 60; // 10 rows * 60px
+    const cellWidthPercent = 100 / gridColumns; // Each column should be equal width to total 100%
+    const totalWidth = 100; // Always 100% for the grid container
+    const totalHeight = 24 * 60; // 24 rows * 60px = 1440px
     return {
       width: `${totalWidth}%`,
       height: `${totalHeight}px`,
@@ -940,8 +940,8 @@ export function FeederLayoutGrid({
 
     // Use the calculated grid columns from feeder data
     const requiredColumns = gridColumns; // This is already calculated based on feeder data
-    const requiredRows = Math.max(10, Math.ceil(feeders.length / 6)); // 6 feeders per column max
-    const cellWidthPercent = 100 / requiredColumns; // Dynamic cell width
+    const requiredRows = 24; // Fixed to 24 rows for consistency
+    const cellWidthPercent = 100 / requiredColumns; // Each column should be equal width
 
     // Find the maximum feeder dimensions for reference
     let maxWidth = 0;
@@ -957,8 +957,8 @@ export function FeederLayoutGrid({
     });
 
     return {
-      width: `${requiredColumns * cellWidthPercent}%`,
-      height: `${requiredRows * 60}px`,
+      width: `${100}%`, // Always 100% for the grid container
+      height: `${requiredRows * 60}px`, // 24 rows * 60px = 1440px
       columns: requiredColumns,
       rows: requiredRows,
       cellWidth: `${cellWidthPercent}%`,
