@@ -285,7 +285,6 @@ export function FeederLayoutGrid({
       }
       group.forEach((feeder, index) => {
         if (index === 0) {
-          debugger;
           totalColumnsNew += mmToGrid(feeder.layout?.width || 300);
           // add vbb after this width group
           totalColumnsNew += mmToGrid(300);
@@ -315,7 +314,6 @@ export function FeederLayoutGrid({
     // Calculate columns for each width group
     sortedWidthGroups.forEach(([width, widthGroupFeeders], widthGroupIndex) => {
       const feederWidthGrid = mmToGrid(width);
-      // debugger;
       // Calculate how many columns we need for this width group
       // Each column can hold feeders up to 1800mm height
       let currentColumnHeight = 0;
@@ -1117,6 +1115,30 @@ export function FeederLayoutGrid({
           overflow: hidden;
           text-overflow: ellipsis;
         }
+
+        /* Ensure grid cells maintain proper width */
+        .grid-stack {
+          --gs-column-width: ${100 / panelDimensions.columns}%;
+        }
+
+        /* Custom scrollbar styling */
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 4px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 4px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
+        }
       `}</style>
       <div className="space-y-4 p-6">
         <div className="flex items-center justify-between">
@@ -1325,7 +1347,8 @@ export function FeederLayoutGrid({
         <div className="text-sm text-muted-foreground">
           Panel ID: {panelId} | Feeders: {feeders.length} | Columns:{" "}
           {gridColumns} | Grid: {panelDimensions.columns}×{panelDimensions.rows}{" "}
-          | Size: {panelDimensions.width} × {panelDimensions.height}
+          | Size: {panelDimensions.width} × {panelDimensions.height} | Grid
+          Width: {Math.max(1200, panelDimensions.columns * 80)}px
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {(panelDimensions as any).maxFeederWidth && (
             <span>
@@ -1408,117 +1431,121 @@ export function FeederLayoutGrid({
         ) : (
           <div className="space-y-4">
             {/* Grid Container */}
-            <div
-              ref={gridRef}
-              className={`grid-stack border-2 border-dashed relative ${
-                isUpdatingGrid ? "opacity-75" : ""
-              }`}
-              style={{
-                backgroundImage: `
-                   linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-                   linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
-                 `,
-                backgroundSize: `${100 / panelDimensions.columns}% 60px`,
-                height: panelDimensions.height,
-              }}
-            >
-              {isUpdatingGrid && (
-                <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center z-10">
-                  <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="text-sm font-medium text-blue-600">
-                        Updating Grid Layout...
-                      </span>
+            <div className="overflow-x-auto">
+              <div
+                ref={gridRef}
+                className={`grid-stack border-2 border-dashed relative ${
+                  isUpdatingGrid ? "opacity-75" : ""
+                }`}
+                style={{
+                  backgroundImage: `
+                      linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
+                    `,
+                  backgroundSize: `${100 / panelDimensions.columns}% 60px`,
+                  height: panelDimensions.height,
+                  width: `${Math.max(1200, panelDimensions.columns * 21)}px`, // Minimum 1200px width, or 80px per column
+                  minWidth: "100%",
+                }}
+              >
+                {isUpdatingGrid && (
+                  <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center z-10">
+                    <div className="bg-white rounded-lg px-4 py-2 shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span className="text-sm font-medium text-blue-600">
+                          Updating Grid Layout...
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              {/* Grid Dimension Labels */}
-              {showDimensions && (
-                <>
-                  {/* Column labels */}
-                  {Array.from({ length: gridColumns }, (_, i) => (
-                    <div
-                      key={`col-${i}`}
-                      className="absolute top-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
-                      style={{
-                        left: `${(i * 100) / gridColumns}%`,
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                  ))}
-                  {/* Row labels */}
-                  {Array.from({ length: panelDimensions.rows }, (_, i) => (
-                    <div
-                      key={`row-${i}`}
-                      className="absolute left-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
-                      style={{
-                        top: `${i * 60}px`,
-                        transform: "translateY(-50%)",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                  ))}
-                  {/* Grid cell unit labels */}
-                  {Array.from({ length: panelDimensions.columns }, (_, col) =>
-                    Array.from({ length: panelDimensions.rows }, (_, row) => (
+                )}
+                {/* Grid Dimension Labels */}
+                {showDimensions && (
+                  <>
+                    {/* Column labels */}
+                    {Array.from({ length: gridColumns }, (_, i) => (
                       <div
-                        key={`cell-${col}-${row}`}
-                        className="absolute text-xs font-mono text-gray-400 bg-white/60 px-1 rounded border border-gray-200"
+                        key={`col-${i}`}
+                        className="absolute top-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
                         style={{
-                          left: `${(col * 100) / panelDimensions.columns}%`,
-                          top: `${row * 60}px`,
-                          width: `${100 / panelDimensions.columns}%`,
-                          height: "60px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          left: `${(i * 100) / gridColumns}%`,
+                          transform: "translateX(-50%)",
                         }}
                       >
-                        {VISUAL_CELL_SIZE_MM}×{VISUAL_CELL_SIZE_MM}
+                        {i + 1}
                       </div>
-                    ))
-                  )}
-                </>
-              )}
+                    ))}
+                    {/* Row labels */}
+                    {Array.from({ length: panelDimensions.rows }, (_, i) => (
+                      <div
+                        key={`row-${i}`}
+                        className="absolute left-0 text-xs font-mono text-gray-600 bg-white/80 px-1 rounded"
+                        style={{
+                          top: `${i * 60}px`,
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        {i + 1}
+                      </div>
+                    ))}
+                    {/* Grid cell unit labels */}
+                    {Array.from({ length: panelDimensions.columns }, (_, col) =>
+                      Array.from({ length: panelDimensions.rows }, (_, row) => (
+                        <div
+                          key={`cell-${col}-${row}`}
+                          className="absolute text-xs font-mono text-gray-400 bg-white/60 px-1 rounded border border-gray-200"
+                          style={{
+                            left: `${(col * 100) / panelDimensions.columns}%`,
+                            top: `${row * 60}px`,
+                            width: `${100 / panelDimensions.columns}%`,
+                            height: "60px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {VISUAL_CELL_SIZE_MM}×{VISUAL_CELL_SIZE_MM}
+                        </div>
+                      ))
+                    )}
+                  </>
+                )}
 
-              {/* Layout Items */}
-              {layoutItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid-stack-item"
-                  gs-w={item.w}
-                  gs-h={item.h}
-                  gs-x={item.x}
-                  gs-y={item.y}
-                  gs-no-resize="true"
-                  gs-no-move={
-                    item.id.startsWith("hbb-top") ||
-                    item.id.startsWith("incomers")
-                      ? "true"
-                      : "false"
-                  }
-                >
+                {/* Layout Items */}
+                {layoutItems.map((item) => (
                   <div
-                    className={`${
-                      item.type !== "HBB" ? "grid-stack-item-content" : ""
-                    } w-full`}
+                    key={item.id}
+                    className="grid-stack-item"
+                    gs-w={item.w}
+                    gs-h={item.h}
+                    gs-x={item.x}
+                    gs-y={item.y}
+                    gs-no-resize="true"
+                    gs-no-move={
+                      item.id.startsWith("hbb-top") ||
+                      item.id.startsWith("incomers")
+                        ? "true"
+                        : "false"
+                    }
                   >
-                    <EquipmentWidget
-                      component={item}
-                      isResize={true}
-                      showDimensions={showDimensions}
-                      feeders={feeders}
-                    />
+                    <div
+                      className={`${
+                        item.type !== "HBB" ? "grid-stack-item-content" : ""
+                      } w-full`}
+                    >
+                      <EquipmentWidget
+                        component={item}
+                        isResize={true}
+                        showDimensions={showDimensions}
+                        feeders={feeders}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              {/* Feeders are now handled through layoutItems */}
+                {/* Feeders are now handled through layoutItems */}
+              </div>
             </div>
 
             {/* Feeders List */}
