@@ -35,6 +35,16 @@ const sampleEquipmentData = `slno	panelname	item	subqty	typecode	height	width
 01	MCC VIENTN	30V DC  power supply Reg. 5A	1	SWITCH	300	500
 01	MCC VIENTN	24V DC power supply 200W 16A	1	SWITCH	300	500`;
 
+// Test data with incomer to verify the new logic
+const testDataWithIncomer = `slno	panelname	item	subqty	typecode	height	width
+01	MCC VIENTN	Main Incomer 2000A ACB	1	INCOMER	750	1000
+01	MCC VIENTN	DOL starter 3ph 20HP/15KW	3	STARTE	600	500
+01	MCC VIENTN	Control Switch	2	SWITCH	300	500
+01	MCC VIENTN	Main Breaker 1000A	1	MAIN_BREAKER	600	800
+01	MCC VIENTN	Transformer 5KVA	1	TRANSFORMER	500	400
+01	MCC VIENTN	2000A 4P ACB	1	ACB	750	1000
+01	MCC VIENTN	1000A ACB Breaker	1	ACB	600	800`;
+
 /**
  * Example function demonstrating the import process
  */
@@ -69,6 +79,49 @@ export async function exampleImport() {
 }
 
 /**
+ * Test function to verify incomer logic
+ * This tests that incomers are excluded from feeder creation
+ */
+export async function testIncomerLogic() {
+  const projectId = "test-project-id";
+
+  try {
+    console.log("Testing incomer logic...");
+    console.log(
+      "Expected behavior: Incomers should NOT create feeders, all other equipment should create feeders"
+    );
+
+    const result = await PanelDataImportService.importPanelData(
+      testDataWithIncomer,
+      projectId
+    );
+
+    if (result.success) {
+      console.log("Test completed successfully!");
+      console.log(`Processed: ${result.processed} items`);
+      console.log(`Failed: ${result.failed} items`);
+      console.log("Summary:", result.summary);
+
+      // The test data has 7 items total:
+      // - 4 incomers (should NOT create feeders): INCOMER, MAIN_BREAKER, ACB, ACB
+      // - 3 non-incomers (should create feeders): STARTE, SWITCH, TRANSFORMER
+      // Expected: 3 feeders should be created
+      console.log(
+        "Expected feeders created: 3 (excluding 4 incomers including ACBs)"
+      );
+    } else {
+      console.log("Test failed:");
+      console.log(`Errors: ${result.errors.join(", ")}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Test error:", error);
+    throw error;
+  }
+}
+
+/**
  * What the service does:
  *
  * 1. Data Processing:
@@ -84,7 +137,7 @@ export async function exampleImport() {
  *    - Creates/finds panel locations (default if not specified)
  *    - Creates/finds panels within the project
  *    - Creates equipment data records
- *    - Creates feeder records for motor equipment
+ *    - Creates feeder records for ALL equipment except incomers
  *
  * 3. Technical Specification Extraction:
  *    - KW/HP ratings from descriptions
@@ -95,7 +148,7 @@ export async function exampleImport() {
  * 4. Data Relationships:
  *    - Links equipment to panels
  *    - Associates equipment with proper types
- *    - Creates feeders for motor loads
+ *    - Creates feeders for all equipment except incomers
  *    - Maintains audit trail with user information
  */
 
