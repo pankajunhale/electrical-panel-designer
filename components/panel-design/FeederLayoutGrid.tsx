@@ -507,9 +507,9 @@ export function FeederLayoutGrid({
 
         // Position feeders in this height group
         let currentColumnHeight = 0;
-        let currentColumnX = currentX;
+        const currentColumnX = currentX;
 
-        heightGroup.forEach((feeder, feederIndex) => {
+        heightGroup.forEach((feeder) => {
           const feederHeight = feeder.layout?.height || 300;
           const feederHeightGrid = mmToGrid(feederHeight);
 
